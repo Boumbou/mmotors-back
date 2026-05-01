@@ -1,0 +1,6 @@
+@mmotors_back_HostAddress = http://localhost:5049
+
+GET {{mmotors_back_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
