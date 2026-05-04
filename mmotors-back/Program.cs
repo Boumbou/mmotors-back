@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using mmotors_back.Data;
 using mmotors_back.Models;
+using mmotors_back.Mappers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +72,12 @@ builder.Services.AddSwaggerGen(options =>
         Description = "An ASP.NET Core Web API for managing MMotors.",
     });
 });
+
+
+//add mappers
+builder.Services.AddScoped<UserMapper>();
+
+//add controllers
 
 var app = builder.Build();
 
