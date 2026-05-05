@@ -5,10 +5,24 @@ using Microsoft.IdentityModel.Tokens;
 using mmotors_back.Data;
 using mmotors_back.Models;
 using mmotors_back.Mappers;
+using mmotors_back.Features.Accounts.Interfaces;
+using mmotors_back.Features.Accounts.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+//allow CORS for development
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Adjust the origin as needed
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -77,6 +91,9 @@ builder.Services.AddSwaggerGen(options =>
 //add mappers
 builder.Services.AddScoped<UserMapper>();
 
+//add token service
+builder.Services.AddScoped<ITokenService, TokenService>();
+
 //add controllers
 
 var app = builder.Build();
@@ -90,6 +107,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

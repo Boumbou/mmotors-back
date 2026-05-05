@@ -15,7 +15,6 @@ namespace mmotors_back.Mappers
                 Email = user.Email,
                 Name = user.Name,
                 LastName = user.LastName,
-                AuthToken = user.Token.HasValue ? user.Token.Value.ToString() : null
             };
         }
 

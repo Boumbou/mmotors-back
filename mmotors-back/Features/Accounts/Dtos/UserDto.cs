@@ -8,7 +8,6 @@ namespace mmotors_back.Features.Accounts.Dtos
 		public string Email { get; set; }
 		public string Name { get; set; }
 		public string LastName { get; set; }
-		public string AuthToken { get; set; }
 	}
 
 	public class VerifyTokenDto
