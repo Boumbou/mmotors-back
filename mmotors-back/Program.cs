@@ -94,7 +94,8 @@ builder.Services.AddScoped<UserMapper>();
 //add token service
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-//add controllers
+//add DataSeeder
+builder.Services.AddScoped<DataSeeder>();
 
 var app = builder.Build();
 
@@ -112,5 +113,22 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+//seed admin user
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    var dataSeeder = new DataSeeder(userManager, roleManager);
+    await dataSeeder.SeedData(new User
+    {
+        Name = "Admin",
+        LastName = "User",
+        UserName = "admin@example.com",
+        Email = "admin@example.com"
+    }, "adminPassword1");
+}
 
 app.Run();
