@@ -7,6 +7,12 @@
     * it will use the VehicleDto to transfer data between the database and the controllers
 */
 
+using mmotors_back.Data;
+using mmotors_back.Features.Vehicles.Interfaces;
+using mmotors_back.Features.Vehicles.Dtos;
+using mmotors_back.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace mmotors_back.Features.Vehicles.Repositories
 {
     public class VehiclesRepository : IVehiclesRepository
@@ -20,7 +26,17 @@ namespace mmotors_back.Features.Vehicles.Repositories
 
         public async Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Vehicles
+                .Select(v => new VehicleDto
+                {
+                    Id = v.Id,
+                    Brand = v.Brand,
+                    Model = v.Model,
+                    Year = v.Year,
+                    ListingType = v.ListingType,
+                    Status = v.Status
+                })
+                .ToListAsync();
         }
 
         public async Task<VehicleDto> GetVehicleByIdAsync(int id)

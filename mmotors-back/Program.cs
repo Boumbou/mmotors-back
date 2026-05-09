@@ -8,6 +8,8 @@ using mmotors_back.Models;
 using mmotors_back.Mappers;
 using mmotors_back.Features.Accounts.Interfaces;
 using mmotors_back.Features.Accounts.Services;
+using mmotors_back.Features.Vehicles.Interfaces;
+using mmotors_back.Features.Vehicles.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -98,6 +100,9 @@ builder.Services.AddScoped<UserMapper>();
 
 //add token service
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+//add repositories
+builder.Services.AddScoped<IVehiclesRepository, VehiclesRepository>();
 
 //add DataSeeder
 builder.Services.AddScoped<DataSeeder>();
