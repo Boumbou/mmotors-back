@@ -20,5 +20,12 @@ RUN dotnet publish "mmotors-back.csproj" -c $configuration -o /app/publish /p:Us
 
 FROM base AS final
 WORKDIR /app
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
+USER app
 COPY --from=publish /app/publish .
+    
 ENTRYPOINT ["dotnet", "mmotors-back.dll"]
