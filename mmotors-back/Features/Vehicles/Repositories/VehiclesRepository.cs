@@ -11,6 +11,7 @@ using mmotors_back.Data;
 using mmotors_back.Features.Vehicles.Interfaces;
 using mmotors_back.Features.Vehicles.Dtos;
 using mmotors_back.Models;
+using mmotors_back.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace mmotors_back.Features.Vehicles.Repositories
@@ -27,15 +28,7 @@ namespace mmotors_back.Features.Vehicles.Repositories
         public async Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync()
         {
             return await _context.Vehicles
-                .Select(v => new VehicleDto
-                {
-                    Id = v.Id,
-                    Brand = v.Brand,
-                    Model = v.Model,
-                    Year = v.Year,
-                    ListingType = v.ListingType,
-                    Status = v.Status
-                })
+                .Select(v => VehicleMapper.ToDTO(v))
                 .ToListAsync();
         }
 
