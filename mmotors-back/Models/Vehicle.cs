@@ -20,6 +20,7 @@ namespace mmotors_back.Models
         public int Id { get; set; }
         public string Brand { get; set; }
         public string Model { get; set; }
+        public int Year { get; set; }
         public Motorization Motorization { get; set; }
         public int Mileage { get; set; }
         public decimal ListedAmount { get; set; }
@@ -28,6 +29,8 @@ namespace mmotors_back.Models
         public VehicleStatus Status { get; set; } // AVAILABLE, SOLD, RENTED
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ImageKey { get; set; }
     }
     public enum ListingType
     {

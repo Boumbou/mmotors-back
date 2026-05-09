@@ -8,6 +8,11 @@
     * it is decorated with the [Authorize] attribute to require authentication for all actions
 */
 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using mmotors_back.Features.Vehicles.Interfaces;
+using mmotors_back.Features.Vehicles.Dtos;
+
 namespace mmotors_back.Features.Vehicles.Controllers
 {
     [ApiController]
@@ -23,6 +28,7 @@ namespace mmotors_back.Features.Vehicles.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllVehicles()
         {
             var vehicles = await _vehiclesRepository.GetAllVehiclesAsync();
@@ -30,6 +36,7 @@ namespace mmotors_back.Features.Vehicles.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetVehicleById(int id)
         {
             var vehicle = await _vehiclesRepository.GetVehicleByIdAsync(id);

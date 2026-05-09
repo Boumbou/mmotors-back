@@ -5,6 +5,7 @@
 using mmotors_back.Data;
 using mmotors_back.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.VisualBasic;
 
 
 namespace mmotors_back.Data;
@@ -67,6 +68,7 @@ public class DataSeeder
                 Motorization = Motorization.Essence,
                 Mileage = 50000,
                 ListedAmount = 15000,
+                Year = 2019,
                 RentalTermMonths = null,
                 ListingType = ListingType.SALE,
                 Status = VehicleStatus.AVAILABLE,
@@ -79,6 +81,7 @@ public class DataSeeder
                 Model = "Model 3",
                 Motorization = Motorization.Électrique,
                 Mileage = 20000,
+                Year = 2020,
                 ListedAmount = 35000,
                 RentalTermMonths = null,
                 ListingType = ListingType.SALE,
@@ -92,6 +95,7 @@ public class DataSeeder
                 Model = "Clio",
                 Motorization = Motorization.Diesel,
                 Mileage = 80000,
+                Year = 2018,
                 ListedAmount = 10000,
                 RentalTermMonths = null,
                 ListingType = ListingType.SALE,
