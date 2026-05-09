@@ -50,4 +50,58 @@ public class DataSeeder
 
         return ;
     }
+
+    public async Task SeedVehicles(AppDbContext dbContext)
+    {
+        if (dbContext.Vehicles.Any())
+        {
+            return; // Data already seeded
+        }
+
+        var vehicles = new List<Vehicle>
+        {
+            new Vehicle
+            {
+                Brand = "Toyota",
+                Model = "Corolla",
+                Motorization = Motorization.Essence,
+                Mileage = 50000,
+                ListedAmount = 15000,
+                RentalTermMonths = null,
+                ListingType = ListingType.SALE,
+                Status = VehicleStatus.AVAILABLE,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Vehicle
+            {
+                Brand = "Tesla",
+                Model = "Model 3",
+                Motorization = Motorization.Électrique,
+                Mileage = 20000,
+                ListedAmount = 35000,
+                RentalTermMonths = null,
+                ListingType = ListingType.SALE,
+                Status = VehicleStatus.AVAILABLE,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Vehicle
+            {
+                Brand = "Renault",
+                Model = "Clio",
+                Motorization = Motorization.Diesel,
+                Mileage = 80000,
+                ListedAmount = 10000,
+                RentalTermMonths = null,
+                ListingType = ListingType.SALE,
+                Status = VehicleStatus.AVAILABLE,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        };
+
+        dbContext.Vehicles.AddRange(vehicles);
+        await dbContext.SaveChangesAsync();
+    }
 }

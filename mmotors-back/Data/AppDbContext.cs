@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
 
+
 namespace mmotors_back.Data
 {
     public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
     {
         public DbSet<User> Users { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
    
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {

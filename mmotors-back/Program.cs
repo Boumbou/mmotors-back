@@ -165,6 +165,8 @@ using (var scope = app.Services.CreateScope())
         UserName = "admin@example.com",
         Email = "admin@example.com"
     }, "adminPassword1");
+
+    await dataSeeder.SeedVehicles(services.GetRequiredService<AppDbContext>());
 }
 
 app.Run();
