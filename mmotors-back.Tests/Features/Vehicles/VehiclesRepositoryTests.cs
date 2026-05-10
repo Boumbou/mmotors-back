@@ -20,6 +20,7 @@ namespace mmotors_back.Tests.Features.Vehicles
     {
         private readonly Mock<AppDbContext> _context;
 
+        //test when there are vehicles and no filter is applied
         [Fact]
         public async Task GetAllVehiclesAsync_ShouldReturnAllVehicles_WhenVehiclesExist()
         {
@@ -32,17 +33,18 @@ namespace mmotors_back.Tests.Features.Vehicles
 
             context.Vehicles.AddRange(
                 new Vehicle { Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE },
-                new Vehicle { Brand = "BMW", Model = "Serie 3", Year = 2019, ListingType = ListingType.RENTAL, Status = VehicleStatus.RENTED }
+                new Vehicle { Brand = "BMW", Model = "Serie 3", Year = 2019, ListingType = ListingType.RENTAL, Status = VehicleStatus.RENTED },
+                new Vehicle { Brand = "Mercedes", Model = "C-Class", Year = 2021, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE }
             );
 
             await context.SaveChangesAsync();
             var repository = new VehiclesRepository(context);
 
             // Act
-            var result = await repository.GetAllVehiclesAsync();
+            var result = await repository.GetAllVehiclesAsync(type: null);
 
             // Assert contains the expected number of vehicles
-            Assert.Equal(2, result.Count());
+            Assert.Equal(3, result.Count());
             // Assert every item contains the expected properties of the vehicles
             Assert.All(result, v =>
             {
@@ -55,6 +57,7 @@ namespace mmotors_back.Tests.Features.Vehicles
             });
         }
 
+        //test the case when there are no vehicles in the database
         [Fact]
         public async Task GetAllVehiclesAsync_ShouldReturnEmptyList_WhenNoVehiclesExist()
         {            
@@ -67,13 +70,49 @@ namespace mmotors_back.Tests.Features.Vehicles
             var repository = new VehiclesRepository(context);
 
             // Act
-            var result = await repository.GetAllVehiclesAsync();
+            var result = await repository.GetAllVehiclesAsync(type: null);
 
             // Assert
             Assert.Empty(result);
         }
-   
-        
+
+        //test the case when there are vehicle and a filter is applied
+        [Fact]
+        public async Task GetAllVehiclesAsync_ShouldReturnFilteredVehicles_WhenTypeFilterIsApplied()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
+            await using var context = new AppDbContext(options);
+
+            context.Vehicles.AddRange(
+                new Vehicle { Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE },
+                new Vehicle { Brand = "BMW", Model = "Serie 3", Year = 2019, ListingType = ListingType.RENTAL, Status = VehicleStatus.RENTED },
+                new Vehicle { Brand = "Mercedes", Model = "C-Class", Year = 2021, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE }
+            );
+
+            await context.SaveChangesAsync();
+            var repository = new VehiclesRepository(context);
+
+            // Act
+            var result = await repository.GetAllVehiclesAsync(type: "sale");
+
+            // Assert contains the expected number of vehicles
+            Assert.Equal(2, result.Count());
+            // Assert every item contains the expected properties of the vehicles
+            Assert.All(result, v =>
+            {
+                Assert.NotEqual(0, v.Id);
+                Assert.False(string.IsNullOrEmpty(v.Brand));
+                Assert.False(string.IsNullOrEmpty(v.Model));
+                Assert.InRange(v.Year, 1900, DateTime.Now.Year);
+                Assert.Equal(ListingType.SALE, v.ListingType);
+                Assert.IsType<VehicleStatus>(v.Status);
+            });
+        }
+             
    
     }
 }

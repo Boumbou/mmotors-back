@@ -25,9 +25,18 @@ namespace mmotors_back.Features.Vehicles.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync()
+        public async Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync(string? type = null)
         {
-            return await _context.Vehicles
+            ListingType? listingType = Enum.TryParse<ListingType>(type,true, out ListingType result) ? result : (ListingType?)null;
+
+            var query = _context.Vehicles.AsQueryable();
+
+            if (listingType.HasValue)
+            {
+                query = query.Where(v => v.ListingType == listingType.Value);
+            }
+
+            return await query
                 .Select(v => VehicleMapper.ToDTO(v))
                 .ToListAsync();
         }

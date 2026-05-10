@@ -29,7 +29,7 @@ namespace mmotors_back.Features.Vehicles.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllVehicles()
+        public async Task<IActionResult> GetAllVehicles(string type)
         {
             var vehicles = await _vehiclesRepository.GetAllVehiclesAsync();
             return Ok(vehicles);

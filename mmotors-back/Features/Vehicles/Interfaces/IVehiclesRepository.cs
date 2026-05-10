@@ -10,7 +10,7 @@ namespace mmotors_back.Features.Vehicles.Interfaces
 {
     public interface IVehiclesRepository
     {
-        Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync();
+        Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync(string? type = null);
         Task<VehicleDto> GetVehicleByIdAsync(int id);
         Task AddVehicleAsync(VehicleDto vehicle);
         Task UpdateVehicleAsync(VehicleDto vehicle);
