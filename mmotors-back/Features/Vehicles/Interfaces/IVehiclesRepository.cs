@@ -5,12 +5,13 @@
     * it will use the VehicleDto to transfer data between the database and the controllers
 */
 using mmotors_back.Features.Vehicles.Dtos;
+using mmotors_back.Models;
 
 namespace mmotors_back.Features.Vehicles.Interfaces
 {
     public interface IVehiclesRepository
     {
-        Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync(string? type = null);
+        Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams paginationParams = null);
         Task<VehicleDto> GetVehicleByIdAsync(int id);
         Task AddVehicleAsync(VehicleDto vehicle);
         Task UpdateVehicleAsync(VehicleDto vehicle);

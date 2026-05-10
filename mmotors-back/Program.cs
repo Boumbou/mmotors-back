@@ -10,6 +10,8 @@ using mmotors_back.Features.Accounts.Interfaces;
 using mmotors_back.Features.Accounts.Services;
 using mmotors_back.Features.Vehicles.Interfaces;
 using mmotors_back.Features.Vehicles.Repositories;
+using mmotors_back.Features.Shared.Interfaces;
+using mmotors_back.Features.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,6 +105,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 //add repositories
 builder.Services.AddScoped<IVehiclesRepository, VehiclesRepository>();
+
+//add PaginationService
+builder.Services.AddScoped<IPaginationService, PaginationService>();
 
 //add DataSeeder
 builder.Services.AddScoped<DataSeeder>();

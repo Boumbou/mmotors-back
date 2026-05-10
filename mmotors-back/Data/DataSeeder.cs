@@ -65,7 +65,7 @@ public class DataSeeder
             {
                 Brand = "Toyota",
                 Model = "Corolla",
-                Motorization = Motorization.Essence,
+                Motorization = Motorization.Petrol,
                 Mileage = 50000,
                 ListedAmount = 15000,
                 Year = 2019,
@@ -79,7 +79,7 @@ public class DataSeeder
             {
                 Brand = "Tesla",
                 Model = "Model 3",
-                Motorization = Motorization.Électrique,
+                Motorization = Motorization.Electric,
                 Mileage = 20000,
                 Year = 2020,
                 ListedAmount = 35000,
