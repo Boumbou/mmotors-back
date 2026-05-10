@@ -10,6 +10,7 @@
 using mmotors_back.Data;
 using mmotors_back.Features.Vehicles.Interfaces;
 using mmotors_back.Features.Vehicles.Dtos;
+using mmotors_back.Features.Shared.Interfaces;
 using mmotors_back.Models;
 using mmotors_back.Mappers;
 using Microsoft.EntityFrameworkCore;
@@ -19,13 +20,15 @@ namespace mmotors_back.Features.Vehicles.Repositories
     public class VehiclesRepository : IVehiclesRepository
     {
         private readonly AppDbContext _context;
+        private readonly IPaginationService _paginationService;
 
-        public VehiclesRepository(AppDbContext context)
+        public VehiclesRepository(AppDbContext context, IPaginationService paginationService)
         {
             _context = context;
+            _paginationService = paginationService;
         }
 
-        public async Task<IEnumerable<VehicleDto>> GetAllVehiclesAsync(string? type = null)
+        public async Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams paginationParams = null)
         {
             ListingType? listingType = Enum.TryParse<ListingType>(type,true, out ListingType result) ? result : (ListingType?)null;
 
@@ -36,9 +39,29 @@ namespace mmotors_back.Features.Vehicles.Repositories
                 query = query.Where(v => v.ListingType == listingType.Value);
             }
 
-            return await query
+            if (paginationParams != null)
+            {
+                var pagedResults = await _paginationService.PaginateAsync(query, paginationParams);
+                return new PagedResults<VehicleDto>
+                {
+                    Items = pagedResults.Items.Select(v => VehicleMapper.ToDTO(v)).ToList(),
+                    TotalCount = pagedResults.TotalCount,
+                    PageSize = pagedResults.PageSize,
+                    PageNumber = pagedResults.PageNumber,
+                };
+            }
+
+            var allVehicles = await query
                 .Select(v => VehicleMapper.ToDTO(v))
                 .ToListAsync();
+
+            return new PagedResults<VehicleDto>
+            {
+                Items = allVehicles,
+                TotalCount = allVehicles.Count,
+                PageSize = allVehicles.Count,
+                PageNumber = 1
+            };
         }
 
         public async Task<VehicleDto> GetVehicleByIdAsync(int id)

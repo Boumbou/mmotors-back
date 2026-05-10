@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using mmotors_back.Features.Vehicles.Interfaces;
 using mmotors_back.Features.Vehicles.Dtos;
+using mmotors_back.Models;
 
 namespace mmotors_back.Features.Vehicles.Controllers
 {
@@ -29,9 +30,11 @@ namespace mmotors_back.Features.Vehicles.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllVehicles(string type)
+        public async Task<IActionResult> GetAllVehicles([FromQuery] string? type = null, [FromQuery] PaginationParams? paginationParams = null)
         {
-            var vehicles = await _vehiclesRepository.GetAllVehiclesAsync();
+            
+            PaginationParams queryPaginationParams = paginationParams ?? new PaginationParams();
+            var vehicles = await _vehiclesRepository.GetAllVehiclesAsync(type, queryPaginationParams);
             return Ok(vehicles);
         }
 

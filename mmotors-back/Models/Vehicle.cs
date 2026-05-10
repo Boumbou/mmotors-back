@@ -53,10 +53,10 @@ namespace mmotors_back.Models
 
     public enum Motorization
     {
-        Essence,
+        Petrol,
         Diesel,
-        Électrique,
-        Hybride
+        Electric,
+        Hybrid
     }
 }
 
