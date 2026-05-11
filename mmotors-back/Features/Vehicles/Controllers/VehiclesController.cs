@@ -42,11 +42,15 @@ namespace mmotors_back.Features.Vehicles.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetVehicleById(int id)
         {
-            var vehicle = await _vehiclesRepository.GetVehicleByIdAsync(id);
-            if (vehicle == null)            {
+            try
+            {
+                var vehicle = await _vehiclesRepository.GetVehicleByIdAsync(id);
+                return Ok(vehicle);
+            }catch (KeyNotFoundException)
+            {
                 return NotFound();
             }
-            return Ok(vehicle);
+
         }
 
         [HttpPost]
