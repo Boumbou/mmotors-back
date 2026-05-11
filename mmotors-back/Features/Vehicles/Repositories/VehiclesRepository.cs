@@ -66,7 +66,14 @@ namespace mmotors_back.Features.Vehicles.Repositories
 
         public async Task<VehicleDto> GetVehicleByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var vehicle = await _context.Vehicles.FindAsync(id);
+
+            if (vehicle == null)
+            {
+                throw new KeyNotFoundException($"Vehicle with id {id} not found.");
+            }
+
+            return VehicleMapper.ToDTO(vehicle);
         }
 
         public async Task AddVehicleAsync(VehicleDto vehicle)
