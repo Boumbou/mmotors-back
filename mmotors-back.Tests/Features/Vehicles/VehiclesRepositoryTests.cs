@@ -38,15 +38,15 @@ namespace mmotors_back.Tests.Features.Vehicles
             );
 
             await context.SaveChangesAsync();
-            var repository = new VehiclesRepository(context);
+            var repository = new VehiclesRepository(context, null);
 
             // Act
             var result = await repository.GetAllVehiclesAsync(type: null);
 
             // Assert contains the expected number of vehicles
-            Assert.Equal(3, result.Count());
+            Assert.Equal(3, result.Items.Count());
             // Assert every item contains the expected properties of the vehicles
-            Assert.All(result, v =>
+            Assert.All(result.Items, v =>
             {
                 Assert.NotEqual(0, v.Id);
                 Assert.False(string.IsNullOrEmpty(v.Brand));
@@ -67,13 +67,13 @@ namespace mmotors_back.Tests.Features.Vehicles
                 .Options;
             
             await using var context = new AppDbContext(options);
-            var repository = new VehiclesRepository(context);
+            var repository = new VehiclesRepository(context, null);
 
             // Act
             var result = await repository.GetAllVehiclesAsync(type: null);
 
             // Assert
-            Assert.Empty(result);
+            Assert.Empty(result.Items);
         }
 
         //test the case when there are vehicle and a filter is applied
@@ -94,15 +94,15 @@ namespace mmotors_back.Tests.Features.Vehicles
             );
 
             await context.SaveChangesAsync();
-            var repository = new VehiclesRepository(context);
+            var repository = new VehiclesRepository(context, null);
 
             // Act
             var result = await repository.GetAllVehiclesAsync(type: "sale");
 
             // Assert contains the expected number of vehicles
-            Assert.Equal(2, result.Count());
+            Assert.Equal(2, result.Items.Count());
             // Assert every item contains the expected properties of the vehicles
-            Assert.All(result, v =>
+            Assert.All(result.Items, v =>
             {
                 Assert.NotEqual(0, v.Id);
                 Assert.False(string.IsNullOrEmpty(v.Brand));
@@ -113,6 +113,52 @@ namespace mmotors_back.Tests.Features.Vehicles
             });
         }
              
+        //test get vehicle by id when the vehicle exists
+        [Fact]
+        public async Task GetVehicleById_ShouldReturnVehicle_WhenVehicleExists()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
+            await using var context = new AppDbContext(options);
+            var vehicle = new Vehicle { Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE };
+            context.Vehicles.Add(vehicle);
+            await context.SaveChangesAsync();
+            var repository = new VehiclesRepository(context, null);
+
+            // Act
+            var result = await repository.GetVehicleByIdAsync(vehicle.Id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(vehicle.Id, result.Id);
+            Assert.False(string.IsNullOrEmpty(result.Brand));
+            Assert.False(string.IsNullOrEmpty(result.Model));
+            Assert.InRange(result.Year, 1900, DateTime.Now.Year);
+            Assert.IsType<ListingType>(result.ListingType);
+            Assert.IsType<VehicleStatus>(result.Status);
+        }
+
+        //test get vehicle by id when the vehicle does not exist
+        [Fact]
+        public async Task GetVehicleById_ShouldThrowKeyNotFoundException_WhenVehicleDoesNotExist()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
+            await using var context = new AppDbContext(options);
+            var repository = new VehiclesRepository(context, null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            {
+                await repository.GetVehicleByIdAsync(999); // Assuming 999 is an ID that does not exist
+            });
+        }
    
     }
 }
