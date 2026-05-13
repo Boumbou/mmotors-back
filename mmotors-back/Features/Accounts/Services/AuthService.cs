@@ -58,8 +58,6 @@ namespace mmotors_back.Features.Accounts.Services;
 
             try
             {
-                
-
                 User user = UserMapper.RegisterDtoToEntity(registerDto);
                 IdentityResult result = await _userManager.CreateAsync(user, registerDto.Password);
 
