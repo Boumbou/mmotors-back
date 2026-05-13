@@ -42,6 +42,10 @@ namespace mmotors_back.Features.Accounts.Services
             {
                 //add user id claim
                 new Claim(JwtRegisteredClaimNames.NameId, user.Id),
+                //add user created at claim
+                new Claim(JwtRegisteredClaimNames.Iat, user.Created.ToString()),
+                //add user name claim
+                new Claim(JwtRegisteredClaimNames.Name, user.Name),
                 //add user email claim
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 //add user name claim
