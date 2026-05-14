@@ -1,0 +1,138 @@
+/*
+    * this file implements the applications repository
+    * it implements the IApplicationsRepository interface
+    * its methods are:
+        * Task<Application> CreateApplicationAsync(Application application)
+        * Task<Application> GetApplicationByIdAsync(int id)
+        * Task<IEnumerable<Application>> GetApplicationsByUserIdAsync(int userId)
+        * Task UpdateApplicationAsync(Application application)
+        * Task SubmitApplicationAsync(int id, int userId)
+        * Task ReviewApplicationAsync(int id, int reviewerUserId, bool isApproved, string? rejectionReason)
+*/
+
+using mmotors_back.Data;
+using mmotors_back.Models;
+using mmotors_back.Features.Applications.Interfaces;
+using mmotors_back.Features.Applications.Dtos;
+using mmotors_back.Features.Shared.Interfaces;
+using mmotors_back.Mappers;
+using Microsoft.EntityFrameworkCore;
+
+namespace mmotors_back.Features.Applications.Repositories
+{
+    public class ApplicationRepository : IApplicationsRepository
+    {
+        private readonly AppDbContext _context;
+        private readonly IPaginationService _paginationService;
+
+        public ApplicationRepository(AppDbContext context, IPaginationService paginationService)
+        {
+            _context = context;
+            _paginationService = paginationService;
+        }
+
+        public async Task<ApplicationDto> CreateApplicationAsync(CreateApplicationDto application)
+        {
+            var vehicle = await _context.Vehicles.FindAsync(application.VehicleId);
+            if (vehicle == null)            
+            {
+                throw new KeyNotFoundException($"Vehicle with ID {application.VehicleId} not found.");
+            }
+            if (vehicle.Status != VehicleStatus.AVAILABLE)
+            {
+                throw new InvalidOperationException($"Vehicle with ID {application.VehicleId} is not available for application.");
+            }
+
+            var newApplication = new Application
+            {
+                UserId = application.UserId,
+                VehicleId = application.VehicleId,
+                ApplicationType = application.ApplicationType,
+                BaseAmount = application.BaseAmount,
+                TotalOverheadAmount = application.TotalOverheadAmount,
+                TotalAmount = application.BaseAmount + application.TotalOverheadAmount,
+                Status = ApplicationStatus.DRAFT
+            };
+            _context.Applications.Add(newApplication);
+            await _context.SaveChangesAsync();
+            return ApplicationMapper.ToDto(newApplication);
+        }
+
+        public async Task<ApplicationDto> GetApplicationByIdAsync(int id)
+        {
+            Application? application = await _context.Applications.FindAsync(id);
+            if (application == null)
+            {
+                throw new KeyNotFoundException($"Application with ID {id} not found.");
+            }
+            return ApplicationMapper.ToDto(application);
+        }
+
+        public async Task<PagedResults<ApplicationDto>> GetAllApplicationsAsync(PaginationParams? paginationParams = null)
+        {
+            var query = _context.Applications.AsQueryable();
+
+            var pagedApplications = await _paginationService.PaginateAsync(query, paginationParams ?? new PaginationParams { PageNumber = 1, PageSize = 10 });
+
+            var applicationDtos = pagedApplications.Items.Select(app => ApplicationMapper.ToDto(app)).ToList();
+
+            return new PagedResults<ApplicationDto>
+            {
+                Items = applicationDtos,
+                TotalCount = pagedApplications.TotalCount,
+                PageNumber = pagedApplications.PageNumber,
+                PageSize = pagedApplications.PageSize
+            };
+        }
+
+        public async Task DeleteApplicationAsync(int applicationId)
+        {
+            var application = await _context.Applications.FindAsync(applicationId);
+            if (application == null)
+            {
+                throw new KeyNotFoundException($"Application with ID {applicationId} not found.");
+            }
+
+            _context.Applications.Remove(application);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<PagedResults<ApplicationDto>> GetApplicationsByUserIdAsync(string userId, PaginationParams? paginationParams = null)
+        {
+            //TODO: implement like GetAllApplicationsAsync but filter by userId
+            throw new NotImplementedException();
+        }
+
+        public async Task<PagedResults<ApplicationDto>> GetApplicationByVehicleIdAsync(int vehicleId, PaginationParams? paginationParams = null)
+        {
+            //TODO: implement like GetAllApplicationsAsync but filter by vehicleId
+            throw new NotImplementedException();
+        }
+
+        public async Task UpdateApplicationAsync(Application application)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task SubmitApplicationAsync(int id)
+        {
+            //TODO: find application by id, check if it is in DRAFT or ON_HOLD status, if yes update its status to SUBMITTED and set submittedAt to now, if not throw an exception
+            throw new NotImplementedException();
+        }
+
+        public async Task HoldApplicationAsync(int id)
+        {
+            //TODO: find application by id, check if it is in SUBMITTED status, if yes update its status to ON_HOLD, if not throw an exception
+            throw new NotImplementedException();
+        }
+
+        public async Task ReviewApplicationAsync(int id, bool isApproved, string? rejectionReason)
+        {
+            //TODO: get user id from claim name
+            //TODO: find application by id, check if it is in SUBMITTED status, if yes update its status to APPROVED or REJECTED based on isApproved parameter, set reviewedByUserId to reviewerUserId, set reviewedAt to now, if rejected set rejectionReason, if not throw an exception
+            throw new NotImplementedException();
+        }
+
+
+    }
+}

@@ -23,9 +23,9 @@ namespace mmotors_back.Models
     public class Application
     {
         public int Id { get; set; }
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public int VehicleId { get; set; }
-        public int? ReviewedByUserId { get; set; }
+        public string? ReviewedByUserId { get; set; }
         public ListingType ApplicationType { get; set; } 
         public ApplicationStatus Status { get; set; } = ApplicationStatus.DRAFT;
         public decimal BaseAmount { get; set; }
@@ -34,21 +34,23 @@ namespace mmotors_back.Models
         public DateTime? SubmittedAt { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public string? RejectionReason { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
         public User User { get; set; } = null!;
         public Vehicle Vehicle { get; set; } = null!;
         public User? ReviewedByUser { get; set; }
-        public ICollection<ApplicationService> ApplicationServices { get; set; } = new List<ApplicationService>();
+
+        //TODO: add services navigation property to the application entity
+        // public ICollection<ApplicationService> ApplicationServices { get; set; } = new List<ApplicationService>();
     }
 
     public enum ApplicationStatus
     {
         DRAFT,
+        ON_HOLD,
         SUBMITTED,
-        IN_REVIEW,
         APPROVED,
         REJECTED
     }

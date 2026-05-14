@@ -40,6 +40,8 @@ namespace mmotors_back.Features.Accounts.Services
             //create claims
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.Name, user.Id.ToString()),
+
                 //add user id claim
                 new Claim(JwtRegisteredClaimNames.NameId, user.Id),
                 //add user created at claim

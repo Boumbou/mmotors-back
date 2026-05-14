@@ -10,6 +10,7 @@ using mmotors_back.Features.Vehicles.Dtos;
 using mmotors_back.Models;
 using mmotors_back.Data;
 using mmotors_back.Features.Vehicles.Repositories;
+using mmotors_back.Features.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using System.Reflection;
@@ -18,8 +19,26 @@ namespace mmotors_back.Tests.Features.Vehicles
 {
     public class VehiclesRepositoryTests
     {
-        private readonly Mock<AppDbContext> _context;
+        private readonly Mock<IPaginationService> _paginationServiceMock;
 
+        public VehiclesRepositoryTests()
+        {
+            _paginationServiceMock = new Mock<IPaginationService>();
+            _paginationServiceMock.Setup(p => p.PaginateAsync(It.IsAny<IQueryable<Vehicle>>(), It.IsAny<PaginationParams>()))
+                    .ReturnsAsync((IQueryable<Vehicle> query, PaginationParams paginationParams) =>
+                    {
+                        var items = query.Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
+                                         .Take(paginationParams.PageSize)
+                                         .ToList();
+                        return new PagedResults<Vehicle>
+                        {
+                            Items = items,
+                            TotalCount = query.Count(),
+                            PageNumber = paginationParams.PageNumber,
+                            PageSize = paginationParams.PageSize
+                        };
+                    });
+        }
         //test when there are vehicles and no filter is applied
         [Fact]
         public async Task GetAllVehiclesAsync_ShouldReturnAllVehicles_WhenVehiclesExist()
@@ -38,7 +57,7 @@ namespace mmotors_back.Tests.Features.Vehicles
             );
 
             await context.SaveChangesAsync();
-            var repository = new VehiclesRepository(context, null);
+            var repository = new VehiclesRepository(context, _paginationServiceMock.Object);
 
             // Act
             var result = await repository.GetAllVehiclesAsync(type: null);
@@ -67,7 +86,7 @@ namespace mmotors_back.Tests.Features.Vehicles
                 .Options;
             
             await using var context = new AppDbContext(options);
-            var repository = new VehiclesRepository(context, null);
+            var repository = new VehiclesRepository(context, _paginationServiceMock.Object);
 
             // Act
             var result = await repository.GetAllVehiclesAsync(type: null);
@@ -94,7 +113,7 @@ namespace mmotors_back.Tests.Features.Vehicles
             );
 
             await context.SaveChangesAsync();
-            var repository = new VehiclesRepository(context, null);
+            var repository = new VehiclesRepository(context, _paginationServiceMock.Object);
 
             // Act
             var result = await repository.GetAllVehiclesAsync(type: "sale");
@@ -126,7 +145,7 @@ namespace mmotors_back.Tests.Features.Vehicles
             var vehicle = new Vehicle { Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE };
             context.Vehicles.Add(vehicle);
             await context.SaveChangesAsync();
-            var repository = new VehiclesRepository(context, null);
+            var repository = new VehiclesRepository(context, _paginationServiceMock.Object);
 
             // Act
             var result = await repository.GetVehicleByIdAsync(vehicle.Id);
@@ -151,7 +170,7 @@ namespace mmotors_back.Tests.Features.Vehicles
                 .Options;
 
             await using var context = new AppDbContext(options);
-            var repository = new VehiclesRepository(context, null);
+            var repository = new VehiclesRepository(context, _paginationServiceMock.Object);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
