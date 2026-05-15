@@ -19,15 +19,15 @@ namespace mmotors_back.Models
     public class Service
     {
         public int Id { get; set; }
-        public string Code { get; set; } = null!; // Unique code for the service
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
+        public ListingType ListingType { get; set; } // "SALE, RENTAL"
         public OverheadType OverheadType { get; set; }
         public decimal OverheadValue { get; set; }
-        public bool IsOptional { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public bool IsOptional { get; set; } = true;
+        public bool IsActive { get; set; } = false;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation property
         public ICollection<ApplicationService> ApplicationServices { get; set; } = new List<ApplicationService>();

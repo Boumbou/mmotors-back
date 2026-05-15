@@ -123,10 +123,10 @@ namespace mmotors_back.Features.Applications.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "RequireStaffOrAdminRole")]
+        [Authorize(Policy = "RequireAuthenticatedUser")]
         public async Task<IActionResult> GetAllApplications([FromQuery] PaginationParams? paginationParams = null)
         {
-            PagedResults<ApplicationDto> applications = await _applicationsRepository.GetAllApplicationsAsync(paginationParams);
+            PagedResults<ApplicationDto> applications = await _applicationsRepository.GetAllApplicationsAsync(paginationParams,User);
             return Ok(applications);
         }
 

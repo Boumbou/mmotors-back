@@ -19,11 +19,10 @@ namespace mmotors_back.Models
         public int Id { get; set; }
         public int ApplicationId { get; set; }
         public int ServiceId { get; set; }
-        public bool IsSelected { get; set; }
         public OverheadType AppliedOverheadType { get; set; }
         public decimal AppliedOverheadValue { get; set; }
         public decimal CalculatedOverheadAmount { get; set; }
-        public DateTime? SelectedAt { get; set; }
+        public DateTime? SelectedAt { get; set; }= DateTime.UtcNow;
 
         // Navigation properties
         public Application Application { get; set; } = null!;

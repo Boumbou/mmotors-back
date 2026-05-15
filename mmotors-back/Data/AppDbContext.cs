@@ -12,6 +12,8 @@ namespace mmotors_back.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Application> Applications { get; set; }
+        public DbSet<Service> Services { get; set; }
+        public DbSet<ApplicationService> ApplicationServices { get; set; }
    
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
