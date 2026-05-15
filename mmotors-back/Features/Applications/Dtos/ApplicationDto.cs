@@ -24,9 +24,7 @@ namespace mmotors_back.Features.Applications.Dtos
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        //TODO: add the selected services in the application details response
-        // List of selected services for this application
-        // public List<ApplicationServiceDto> SelectedServices { get; set; } = new List<ApplicationServiceDto>();
+        public ICollection<ApplicationServiceDto> ApplicationServices { get; set; } = new List<ApplicationServiceDto>();
     }
 
     public class CreateApplicationDto
@@ -38,6 +36,8 @@ namespace mmotors_back.Features.Applications.Dtos
 
         public decimal BaseAmount { get; set; }
         public decimal TotalOverheadAmount { get; set; }
+
+        public IEnumerable<int> ServiceIds { get; set; } = new List<int>();
     }
 
     public class UpdateApplicationDto
@@ -52,7 +52,6 @@ namespace mmotors_back.Features.Applications.Dtos
     public class ReviewApplicationDto
     {
         public int ApplicationId { get; set; }
-        public string ReviewerUserId { get; set; }
         public bool IsApproved { get; set; }
         public string? RejectionReason { get; set; }
     }

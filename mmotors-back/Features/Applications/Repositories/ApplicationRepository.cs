@@ -17,6 +17,8 @@ using mmotors_back.Features.Applications.Dtos;
 using mmotors_back.Features.Shared.Interfaces;
 using mmotors_back.Mappers;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace mmotors_back.Features.Applications.Repositories
 {
@@ -49,10 +51,31 @@ namespace mmotors_back.Features.Applications.Repositories
                 VehicleId = application.VehicleId,
                 ApplicationType = application.ApplicationType,
                 BaseAmount = application.BaseAmount,
-                TotalOverheadAmount = application.TotalOverheadAmount,
-                TotalAmount = application.BaseAmount + application.TotalOverheadAmount,
                 Status = ApplicationStatus.DRAFT
             };
+
+            //add selected services
+            var services = await _context.Services.Where(s => application.ServiceIds.Contains(s.Id)).ToListAsync();
+            foreach (var service in services)            {
+                newApplication.ApplicationServices.Add(new ApplicationService
+                {
+                    ServiceId = service.Id,
+                    ApplicationId = newApplication.Id,
+                    AppliedOverheadType = service.OverheadType,
+                    AppliedOverheadValue = service.OverheadValue,
+                    CalculatedOverheadAmount = service.OverheadType switch
+                    {
+                        OverheadType.FIXED_AMOUNT => service.OverheadValue,
+                        OverheadType.PERCENTAGE => (service.OverheadValue / 100) * newApplication.BaseAmount,
+                        _ => 0
+                    }
+                });
+            }
+
+            //calculate total overhead amount and total amount
+            newApplication.TotalOverheadAmount = newApplication.ApplicationServices.Sum(s => s.CalculatedOverheadAmount);
+            newApplication.TotalAmount = newApplication.BaseAmount + newApplication.TotalOverheadAmount;
+
             _context.Applications.Add(newApplication);
             await _context.SaveChangesAsync();
             return ApplicationMapper.ToDto(newApplication);
@@ -68,9 +91,16 @@ namespace mmotors_back.Features.Applications.Repositories
             return ApplicationMapper.ToDto(application);
         }
 
-        public async Task<PagedResults<ApplicationDto>> GetAllApplicationsAsync(PaginationParams? paginationParams = null)
+        public async Task<PagedResults<ApplicationDto>> GetAllApplicationsAsync(PaginationParams? paginationParams = null, ClaimsPrincipal? userClaims = null)
         {
             var query = _context.Applications.AsQueryable();
+
+            //add filtering bbased on user if role is Customer
+            if (userClaims != null && userClaims.IsInRole("Customer"))
+            {
+                string userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+                query = query.Where(a => a.UserId == userId).Include(a => a.ApplicationServices);
+            }
 
             var pagedApplications = await _paginationService.PaginateAsync(query, paginationParams ?? new PaginationParams { PageNumber = 1, PageSize = 10 });
 
@@ -126,7 +156,7 @@ namespace mmotors_back.Features.Applications.Repositories
             throw new NotImplementedException();
         }
 
-        public async Task ReviewApplicationAsync(int id, bool isApproved, string? rejectionReason)
+        public async Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication)
         {
             //TODO: get user id from claim name
             //TODO: find application by id, check if it is in SUBMITTED status, if yes update its status to APPROVED or REJECTED based on isApproved parameter, set reviewedByUserId to reviewerUserId, set reviewedAt to now, if rejected set rejectionReason, if not throw an exception

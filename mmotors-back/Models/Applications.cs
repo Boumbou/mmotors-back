@@ -42,8 +42,7 @@ namespace mmotors_back.Models
         public Vehicle Vehicle { get; set; } = null!;
         public User? ReviewedByUser { get; set; }
 
-        //TODO: add services navigation property to the application entity
-        // public ICollection<ApplicationService> ApplicationServices { get; set; } = new List<ApplicationService>();
+        public ICollection<ApplicationService> ApplicationServices { get; set; } = new List<ApplicationService>();
     }
 
     public enum ApplicationStatus

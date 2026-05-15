@@ -47,11 +47,11 @@ namespace mmotors_back.Features.Accounts.Services
                 //add user created at claim
                 new Claim(JwtRegisteredClaimNames.Iat, user.Created.ToString()),
                 //add user name claim
-                new Claim(JwtRegisteredClaimNames.Name, user.Name),
+                new Claim(JwtRegisteredClaimNames.Name, user.Name!),
                 //add user email claim
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 //add user name claim
-                new Claim(JwtRegisteredClaimNames.GivenName, user.Email),
+                new Claim(JwtRegisteredClaimNames.GivenName, user.Email!),
 
             };
             //add roles to claims

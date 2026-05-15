@@ -20,7 +20,8 @@ namespace mmotors_back.Mappers
                 TotalAmount = application.TotalAmount,
                 Status = application.Status,
                 CreatedAt = application.CreatedAt,
-                UpdatedAt = application.UpdatedAt
+                UpdatedAt = application.UpdatedAt,
+                ApplicationServices = application.ApplicationServices.Select(s => ApplicationServiceMapper.ToDto(application)).ToList()
             };
         }
 
