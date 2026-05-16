@@ -14,6 +14,8 @@ namespace mmotors_back.Data
         public DbSet<Application> Applications { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<ApplicationService> ApplicationServices { get; set; }
+        public DbSet<Document> Documents { get; set; }
+        public DbSet<DocumentTemplate> DocumentTemplates { get; set; }
    
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -66,6 +68,8 @@ namespace mmotors_back.Data
             };
             //Seed roles into the IdentityRole entity
             builder.Entity<IdentityRole>().HasData(roles);
+
+            
         }
 
     }

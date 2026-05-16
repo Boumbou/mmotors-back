@@ -9,6 +9,7 @@
 */
 
 using mmotors_back.Models;
+using mmotors_back.Features.Documents.Dtos;
 
 namespace mmotors_back.Features.Applications.Dtos
 {
@@ -25,6 +26,7 @@ namespace mmotors_back.Features.Applications.Dtos
         public DateTime UpdatedAt { get; set; }
 
         public ICollection<ApplicationServiceDto> ApplicationServices { get; set; } = new List<ApplicationServiceDto>();
+        public ICollection<DocumentDto> Documents { get; set; } = new List<DocumentDto>();
     }
 
     public class CreateApplicationDto

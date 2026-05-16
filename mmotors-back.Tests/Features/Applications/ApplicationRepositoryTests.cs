@@ -92,6 +92,9 @@ namespace mmotors_back.Tests.Features.Applications
                 await using var context = new AppDbContext(options);
 
                 context.Vehicles.Add(new Vehicle { Id = 1, Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE });
+                context.Services.Add(new Service { Id = 1, Name = "Service 1", Description = "Service 1 Description", OverheadType = OverheadType.FIXED_AMOUNT, OverheadValue = 500 });
+                context.DocumentTemplates.Add(new DocumentTemplate { Id = 1, Name = "Document 1", Type = DocumentType.COMMON_APPLICATION, IsActive = true });
+                
                 await context.SaveChangesAsync();
 
                 var repository = new ApplicationRepository(context, null!);
@@ -100,9 +103,9 @@ namespace mmotors_back.Tests.Features.Applications
                 {
                     UserId = Guid.NewGuid().ToString(),
                     VehicleId = 1,
-                    ApplicationType = ListingType.SALE,
+                    ApplicationType = ListingType.RENTAL,
                     BaseAmount = 20000,
-                    TotalOverheadAmount = 500,
+                    ServiceIds = new List<int> { 1},
                 };
 
                 // Act
@@ -116,10 +119,12 @@ namespace mmotors_back.Tests.Features.Applications
                 Assert.Equal(application.UserId, result.UserId);
                 Assert.Equal(application.VehicleId, result.VehicleId);
                 Assert.Equal(application.ApplicationType, result.ApplicationType);
-                Assert.Equal(application.BaseAmount + application.TotalOverheadAmount, result.TotalAmount);
+                Assert.Equal(application.BaseAmount + result.ApplicationServices.Sum(s => s.CalculatedOverheadAmount), result.TotalAmount);
                 Assert.NotEqual(default(DateTime), result.CreatedAt);
                 Assert.NotEqual(default(DateTime), result.UpdatedAt);
                 Assert.Equal(ApplicationStatus.DRAFT, result.Status);
+                Assert.NotEmpty(result.Documents);
+                Assert.NotEmpty(result.ApplicationServices);
              
             }
 

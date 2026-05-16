@@ -31,6 +31,10 @@ namespace mmotors_back.Models
         public DateTime UpdatedAt { get; set; }
         public string? ImageUrl { get; set; }
         public string? ImageKey { get; set; }
+
+        // Navigation properties
+        public ICollection<Application> Applications { get; set; } = new List<Application>();
+        public ICollection<Document> Documents { get; set; } = new List<Document>();
     }
     public enum ListingType
     {

@@ -76,6 +76,24 @@ namespace mmotors_back.Features.Applications.Repositories
             newApplication.TotalOverheadAmount = newApplication.ApplicationServices.Sum(s => s.CalculatedOverheadAmount);
             newApplication.TotalAmount = newApplication.BaseAmount + newApplication.TotalOverheadAmount;
 
+
+            
+            //add expected documents based on listing type
+            var expectedDocuments = await _context.DocumentTemplates.Where(
+                d => d.IsActive && (d.Type == DocumentType.COMMON_APPLICATION ||
+                     (d.Type == DocumentType.SALES_APPLICATION && vehicle.ListingType == ListingType.SALE) ||
+                     (d.Type == DocumentType.RENTAL_APPLICATION && vehicle.ListingType == ListingType.RENTAL))
+            ).ToListAsync();
+
+            foreach (var docTemplate in expectedDocuments)
+            {
+                newApplication.Documents.Add(new Document
+                {
+                    FileName = docTemplate.Name,
+                    Type = docTemplate.Type, // this can be used in the frontend to display the required documents for the application
+                });
+            }
+            
             _context.Applications.Add(newApplication);
             await _context.SaveChangesAsync();
             return ApplicationMapper.ToDto(newApplication);
@@ -99,7 +117,7 @@ namespace mmotors_back.Features.Applications.Repositories
             if (userClaims != null && userClaims.IsInRole("Customer"))
             {
                 string userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-                query = query.Where(a => a.UserId == userId).Include(a => a.ApplicationServices);
+                query = query.Where(a => a.UserId == userId).Include(a => a.ApplicationServices).Include(a => a.Documents);
             }
 
             var pagedApplications = await _paginationService.PaginateAsync(query, paginationParams ?? new PaginationParams { PageNumber = 1, PageSize = 10 });

@@ -108,4 +108,51 @@ public class DataSeeder
         dbContext.Vehicles.AddRange(vehicles);
         await dbContext.SaveChangesAsync();
     }
+
+    public async Task SeedDocumentTemplates(AppDbContext dbContext)
+    {
+        if (dbContext.DocumentTemplates.Any())
+        {
+            return; // Data already seeded
+        }
+
+        var documentTemplates = new List<DocumentTemplate>
+        {
+            //seed initial document templates
+            new DocumentTemplate
+            {
+                Id = 1,
+                Name = "Photo du véhicule",
+                Type = DocumentType.VEHICLE_PHOTO
+            },
+            new DocumentTemplate
+            {
+                Id = 2,
+                Name = "Justificatif d'identité",
+                Type = DocumentType.COMMON_APPLICATION
+            },
+            new DocumentTemplate
+            {
+                Id = 3,
+                Name = "Justificatif de domicile",
+                Type = DocumentType.COMMON_APPLICATION
+            },
+            new DocumentTemplate
+            {
+                Id = 4,
+                Name = "RIB",
+                Type = DocumentType.RENTAL_APPLICATION
+            },
+            new DocumentTemplate
+            {
+                Id = 5,
+                Name = "Permis de conduire",
+                Type = DocumentType.RENTAL_APPLICATION
+            }
+
+        };
+
+        dbContext.DocumentTemplates.AddRange(documentTemplates);
+        await dbContext.SaveChangesAsync();
+    }
 }

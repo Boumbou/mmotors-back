@@ -228,6 +228,7 @@ var builder = WebApplication.CreateBuilder(args);
         }, "adminPassword1");
 
         await dataSeeder.SeedVehicles(services.GetRequiredService<AppDbContext>());
+        await dataSeeder.SeedDocumentTemplates(services.GetRequiredService<AppDbContext>());
     }
 #endregion
 

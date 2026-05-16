@@ -21,7 +21,8 @@ namespace mmotors_back.Mappers
                 Status = application.Status,
                 CreatedAt = application.CreatedAt,
                 UpdatedAt = application.UpdatedAt,
-                ApplicationServices = application.ApplicationServices.Select(s => ApplicationServiceMapper.ToDto(application)).ToList()
+                ApplicationServices = application.ApplicationServices.Select(s => ApplicationServiceMapper.ToDto(s)).ToList(),
+                Documents = application.Documents.Select(d => DocumentMapper.ToDto(d)).ToList()
             };
         }
 
