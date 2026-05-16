@@ -9,14 +9,14 @@ namespace mmotors_back.Mappers
 {
     public static class ApplicationServiceMapper
     {
-        public static ApplicationServiceDto ToDto(Application application) 
+        public static ApplicationServiceDto ToDto(ApplicationService Service) 
         {
             return new ApplicationServiceDto
             {
-                ServiceId = application.ApplicationServices.FirstOrDefault()?.ServiceId ?? 0,
-                AppliedOverheadType = application.ApplicationServices.FirstOrDefault()?.AppliedOverheadType ?? OverheadType.FIXED_AMOUNT,
-                AppliedOverheadValue = application.ApplicationServices.FirstOrDefault()?.AppliedOverheadValue ?? 0,
-                CalculatedOverheadAmount = application.ApplicationServices.FirstOrDefault()?.CalculatedOverheadAmount ?? 0
+                ServiceId = Service.ServiceId,
+                AppliedOverheadType = Service.AppliedOverheadType,
+                AppliedOverheadValue = Service.AppliedOverheadValue,
+                CalculatedOverheadAmount = Service.CalculatedOverheadAmount
             };
         }
     }

@@ -43,6 +43,7 @@ namespace mmotors_back.Models
         public User? ReviewedByUser { get; set; }
 
         public ICollection<ApplicationService> ApplicationServices { get; set; } = new List<ApplicationService>();
+        public ICollection<Document> Documents { get; set; } = new List<Document>();
     }
 
     public enum ApplicationStatus
