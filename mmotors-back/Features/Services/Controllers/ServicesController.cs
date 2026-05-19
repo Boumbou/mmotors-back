@@ -43,14 +43,17 @@ namespace mmotors_back.Features.Services.Controllers
         [Authorize("RequireAdminRole")]
         public async Task<ActionResult<ServiceDto>> GetService(int id)
         {
-            var service = await _servicesRepository.GetServiceByIdAsync(id);
-
-            if (service == null)
+            try
+            {
+                 var service = await _servicesRepository.GetServiceByIdAsync(id);
+                 return Ok(service);
+            }catch (KeyNotFoundException)
             {
                 return NotFound();
+            }catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while retrieving the service.");
             }
-
-            return service;
         }
 
         // POST: api/services
