@@ -61,6 +61,25 @@ namespace mmotors_back.Tests.Features.Services
                 Assert.Contains(result, s => s.Name == "Service 2");
             }
 
+            //test GetAllServicesAsync_ShouldReturnRightServices_WhenListingTypeFilterIsApplied
+            [Fact]
+            public async Task GetAllServicesAsync_ShouldReturnRightServices_WhenListingTypeFilterIsApplied()
+            {
+                // Arrange
+                var service1 = new Service { Name = "Service 1", Description = "Description 1", ListingType = ListingType.SALE, OverheadType = OverheadType.PERCENTAGE, OverheadValue = 10, IsOptional = true, IsActive = true };
+                var service2 = new Service { Name = "Service 2", Description = "Description 2", ListingType = ListingType.RENTAL, OverheadType = OverheadType.FIXED_AMOUNT, OverheadValue = 50, IsOptional = false, IsActive = true };
+                _context.Services.AddRange(service1, service2);
+                await _context.SaveChangesAsync();
+
+                // Act
+                var result = await _servicesRepository.GetAllServicesAsync(ListingType.SALE);
+
+                // Assert
+                Assert.NotNull(result);
+                Assert.Single(result);
+                Assert.Contains(result, s => s.Name == "Service 1");
+            }
+
             //test GetAllServicesAsync_ShouldReturnEmptyList_WhenNoServices
             [Fact]
             public async Task GetAllServicesAsync_ShouldReturnEmptyList_WhenNoServices()
