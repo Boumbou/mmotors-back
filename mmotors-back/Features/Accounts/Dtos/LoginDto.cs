@@ -6,17 +6,16 @@ namespace mmotors_back.Features.Accounts.Dtos
 {
     public class LoginDto
     {
-        [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public required string Email { get; set; }
         [Required]
         [DataType(DataType.Password)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
     }
 
     public class LoginResultDto
     {
-        public SignInResult Result { get; set; }
+        public required SignInResult Result { get; set; }
         public UserDto? User { get; set; }
         public string Token { get; set; } = string.Empty;
     }
