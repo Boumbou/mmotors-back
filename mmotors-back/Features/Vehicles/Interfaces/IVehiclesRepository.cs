@@ -11,7 +11,7 @@ namespace mmotors_back.Features.Vehicles.Interfaces
 {
     public interface IVehiclesRepository
     {
-        Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams paginationParams = null);
+        Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams? paginationParams = null);
         Task<VehicleDto> GetVehicleByIdAsync(int id);
         Task AddVehicleAsync(VehicleDto vehicle);
         Task UpdateVehicleAsync(VehicleDto vehicle);

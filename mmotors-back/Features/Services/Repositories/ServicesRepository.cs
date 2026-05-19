@@ -41,7 +41,12 @@ namespace mmotors_back.Features.Services.Repositories
         public async Task<ServiceDto> GetServiceByIdAsync(int id)
         {
             var service = await _context.Services.FindAsync(id);
-            return service == null ? null : ServiceMapper.ToDto(service);
+            if (service == null)
+            {
+                throw new Exception("Service not found");
+            }   
+            return ServiceMapper.ToDto(service);
+
         }
 
         public async Task<ServiceDto> CreateServiceAsync(CreateServiceDto service)

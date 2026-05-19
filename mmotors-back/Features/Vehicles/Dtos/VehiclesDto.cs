@@ -15,8 +15,8 @@ namespace mmotors_back.Features.Vehicles.Dtos;
 public class VehicleDto
 {
     public int Id { get; set; }
-    public string Brand { get; set; }
-    public string Model { get; set; }
+    public required string Brand { get; set; }
+    public required string Model { get; set; }
     public int Year { get; set; }
     public Motorization Motorization { get; set; }
     public int Mileage { get; set; }
@@ -32,9 +32,9 @@ public class CreateVehicleDto
 {
     [Required]
     //add validation details
-    public string Brand { get; set; }
+    public required string Brand { get; set; }
     [Required]
-    public string Model { get; set; }
+    public required string Model { get; set; }
     [Required]
     public int Year { get; set; }
     [Required]

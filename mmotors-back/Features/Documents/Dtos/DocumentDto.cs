@@ -15,7 +15,7 @@ namespace mmotors_back.Features.Documents.Dtos
     {
         public int Id { get; set; }
         public DocumentType Type { get; set; }
-        public string FileName { get; set; }
+        public required string FileName { get; set; }
         public string? MimeType { get; set; }
         public string? Extension { get; set; }
         public string? Url { get; set; }
@@ -28,7 +28,7 @@ namespace mmotors_back.Features.Documents.Dtos
     public class CreateDocumentDto
     {
         public DocumentType Type { get; set; }
-        public string FileName { get; set; }
+        public required string FileName { get; set; }
         public int? ApplicationId { get; set; }
         public int? VehicleId { get; set; }
     }
@@ -36,7 +36,7 @@ namespace mmotors_back.Features.Documents.Dtos
     public class UpdateDocumentDto
     {
         public int Id { get; set; }
-        public string FileName { get; set; }
+        public required string FileName { get; set; }
         public string? Url { get; set; }
         public string? MimeType { get; set; }
         public string? Extension { get; set; }
