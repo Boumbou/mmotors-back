@@ -11,7 +11,7 @@ namespace mmotors_back.Models
     public class DocumentTemplate
     {
         public int Id { get; set; }
-        public string Name { get; set; } // the name of the document template (e.g. "Proof of Identity", "Vehicle Registration Certificate", etc.)
+        public required string Name { get; set; } // the name of the document template (e.g. "Proof of Identity", "Vehicle Registration Certificate", etc.)
         public DocumentType Type { get; set; } // the type of the document template (e.g. VehiclePhoto, ApplicationDocument, SalesDocument, RentalDocument)
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

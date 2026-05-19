@@ -13,7 +13,7 @@ namespace mmotors_back.Models
 {
     public class PagedResults<T>
     {
-        public IEnumerable<T> Items { get; set; }
+        public required IEnumerable<T> Items { get; set; }
         public int TotalCount { get; set; }
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
