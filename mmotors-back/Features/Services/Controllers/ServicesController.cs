@@ -32,9 +32,9 @@ namespace mmotors_back.Features.Services.Controllers
         // GET: api/services
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices()
+        public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices([FromQuery] ListingType? listingType = null)
         {
-            var services = await _servicesRepository.GetAllServicesAsync();
+            var services = await _servicesRepository.GetAllServicesAsync(listingType);
             return Ok(services);
         }
 

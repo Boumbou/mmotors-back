@@ -22,7 +22,9 @@ namespace mmotors_back.Mappers
                 CreatedAt = application.CreatedAt,
                 UpdatedAt = application.UpdatedAt,
                 ApplicationServices = application.ApplicationServices.Select(s => ApplicationServiceMapper.ToDto(s)).ToList(),
-                Documents = application.Documents.Select(d => DocumentMapper.ToDto(d)).ToList()
+                Documents = application.Documents.Select(d => DocumentMapper.ToDto(d)).ToList(),
+                Vehicle = application.Vehicle != null ? VehicleMapper.ToDTO(application.Vehicle) : null,
+                Customer = application.User != null ? UserMapper.ToDTO(application.User) : null
             };
         }
 

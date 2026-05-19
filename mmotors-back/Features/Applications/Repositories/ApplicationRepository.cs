@@ -101,7 +101,14 @@ namespace mmotors_back.Features.Applications.Repositories
 
         public async Task<ApplicationDto> GetApplicationByIdAsync(int id)
         {
-            Application? application = await _context.Applications.FindAsync(id);
+            var query = _context.Applications
+                .Where(a => a.Id == id)
+                .Include(a => a.ApplicationServices)
+                .Include(a => a.Documents)
+                .Include(a => a.Vehicle)
+                .Include(a => a.User);
+
+            Application? application = await query.FirstOrDefaultAsync();
             if (application == null)
             {
                 throw new KeyNotFoundException($"Application with ID {id} not found.");
@@ -112,13 +119,15 @@ namespace mmotors_back.Features.Applications.Repositories
         public async Task<PagedResults<ApplicationDto>> GetAllApplicationsAsync(PaginationParams? paginationParams = null, ClaimsPrincipal? userClaims = null)
         {
             var query = _context.Applications.AsQueryable();
-
             //add filtering bbased on user if role is Customer
             if (userClaims != null && userClaims.IsInRole("Customer"))
             {
                 string userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-                query = query.Where(a => a.UserId == userId).Include(a => a.ApplicationServices).Include(a => a.Documents);
+                query = query.Where(a => a.UserId == userId);
             }
+            query = query
+                .Include(a => a.Vehicle)
+                .Include(a => a.Documents);
 
             var pagedApplications = await _paginationService.PaginateAsync(query, paginationParams ?? new PaginationParams { PageNumber = 1, PageSize = 10 });
 

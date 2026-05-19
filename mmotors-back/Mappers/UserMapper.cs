@@ -8,6 +8,7 @@ namespace mmotors_back.Mappers
     {
         public static UserDto ToDTO(User user)
         {
+            if (user == null) return null;
             return new  UserDto
             {
                 Id = user.Id,

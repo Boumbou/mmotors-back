@@ -27,9 +27,14 @@ namespace mmotors_back.Features.Services.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<ServiceDto>> GetAllServicesAsync()
+        public async Task<IEnumerable<ServiceDto>> GetAllServicesAsync(ListingType? listingType = null)
         {
-            var services = await _context.Services.ToListAsync();
+            var query = _context.Services.AsQueryable();
+            if (listingType.HasValue)
+            {
+                query = query.Where(s => s.ListingType == listingType.Value);
+            }
+            var services = await query.ToListAsync();
             return services.Select(ServiceMapper.ToDto);
         }
 
