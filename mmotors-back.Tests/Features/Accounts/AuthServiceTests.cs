@@ -53,6 +53,8 @@ public class AuthServiceTests
         var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
         var registerDto = new RegisterDto
         {
+            Name = "Test User",
+            LastName = "User",
             Email = "test@example.com",
             Password = "Password123!"
         };
@@ -86,6 +88,8 @@ public class AuthServiceTests
         var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
         var registerDto = new RegisterDto
         {
+            Name = "Test User",
+            LastName = "User",
             Email = "test@example.com",
             Password = "Password123!"
         };
@@ -114,6 +118,8 @@ public class AuthServiceTests
         var authService = new AuthService(userManagerMock.Object, GetSignInManagerMock(userManagerMock).Object, null!, GetTokenServiceMock().Object);
         var registerDto = new RegisterDto
         {
+            Name = "Test User",
+            LastName = "User",
             Email = "test@example.com",
             Password = "Password123!"
         };
@@ -139,6 +145,8 @@ public class AuthServiceTests
         var authService = new AuthService(userManagerMock.Object, GetSignInManagerMock(userManagerMock).Object, null!, GetTokenServiceMock().Object);
         var registerDto = new RegisterDto
         {
+            Name = "Test User",
+            LastName = "User",
             Email = "",
             Password = "Password123!"
         };
@@ -160,6 +168,8 @@ public class AuthServiceTests
         var authService = new AuthService(userManagerMock.Object, GetSignInManagerMock(userManagerMock).Object, null!, GetTokenServiceMock().Object);
         var registerDto = new RegisterDto
         {
+            Name = "Test User",
+            LastName = "User",
             Email = "test@example.com",
             Password = ""
         };  

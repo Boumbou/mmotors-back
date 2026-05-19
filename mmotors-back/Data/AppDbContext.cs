@@ -9,7 +9,7 @@ namespace mmotors_back.Data
 {
     public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
     {
-        public DbSet<User> Users { get; set; }
+        public override DbSet<User> Users { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Application> Applications { get; set; }
         public DbSet<Service> Services { get; set; }
