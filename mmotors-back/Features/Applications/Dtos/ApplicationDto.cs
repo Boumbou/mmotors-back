@@ -10,6 +10,9 @@
 
 using mmotors_back.Models;
 using mmotors_back.Features.Documents.Dtos;
+using mmotors_back.Features.Vehicles.Dtos;
+using mmotors_back.Features.Accounts.Dtos;
+using System.ComponentModel.DataAnnotations;
 
 namespace mmotors_back.Features.Applications.Dtos
 {
@@ -27,6 +30,8 @@ namespace mmotors_back.Features.Applications.Dtos
 
         public ICollection<ApplicationServiceDto> ApplicationServices { get; set; } = new List<ApplicationServiceDto>();
         public ICollection<DocumentDto> Documents { get; set; } = new List<DocumentDto>();
+        public VehicleDto? Vehicle { get; set; }
+        public UserDto? Customer { get; set; }
     }
 
     public class CreateApplicationDto

@@ -18,7 +18,7 @@ namespace mmotors_back.Features.Services.Interfaces
 {
     public interface IServicesRepository
     {
-        Task<IEnumerable<ServiceDto>> GetAllServicesAsync();
+        Task<IEnumerable<ServiceDto>> GetAllServicesAsync(ListingType? listingType = null);
         Task<ServiceDto> GetServiceByIdAsync(int id);
         Task<ServiceDto> CreateServiceAsync(CreateServiceDto service);
         Task<int> UpdateServiceAsync(ServiceDto service); //return the id of the updated service, or 0 if not found
