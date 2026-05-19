@@ -23,7 +23,7 @@ namespace mmotors_back.Models
     public class Application
     {
         public int Id { get; set; }
-        public string UserId { get; set; }
+        public required string UserId { get; set; }
         public int VehicleId { get; set; }
         public string? ReviewedByUserId { get; set; }
         public ListingType ApplicationType { get; set; } 
