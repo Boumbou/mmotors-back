@@ -18,6 +18,7 @@ using mmotors_back.Features.Applications.Interfaces;
 using mmotors_back.Features.Applications.Services;
 using mmotors_back.Features.Applications.Dtos;
 using mmotors_back.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace mmotors_back.Features.Applications.Controllers
 {
@@ -90,6 +91,13 @@ namespace mmotors_back.Features.Applications.Controllers
             }
         }
 
+        [HttpGet]
+        [Authorize(Policy = "RequireAuthenticatedUser")]
+        public async Task<IActionResult> GetAllApplications([FromQuery] PaginationParams? paginationParams = null)
+        {
+            PagedResults<ApplicationDto> applications = await _applicationsRepository.GetAllApplicationsAsync(paginationParams,User);
+            return Ok(applications);
+        }
 
         [HttpPost("{id}/delete")]
         [Authorize(Policy = "RequireAuthenticatedUser")]
@@ -115,20 +123,15 @@ namespace mmotors_back.Features.Applications.Controllers
             {
                 await _applicationsRepository.DeleteApplicationAsync(id);
                 return NoContent();
-            }
-            catch (KeyNotFoundException ex)
+            }catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
-        [HttpGet]
-        [Authorize(Policy = "RequireAuthenticatedUser")]
-        public async Task<IActionResult> GetAllApplications([FromQuery] PaginationParams? paginationParams = null)
-        {
-            PagedResults<ApplicationDto> applications = await _applicationsRepository.GetAllApplicationsAsync(paginationParams,User);
-            return Ok(applications);
-        }
 
     }
 }

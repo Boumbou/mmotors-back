@@ -27,7 +27,10 @@ public class DataSeeder
         {
             throw new Exception("Admin role does not exist");
         }
-        
+        if(adminUser.Email == null || string.IsNullOrEmpty(adminPassword))
+        {
+            throw new Exception("Admin user or password is null or empty");
+        }
         //check if user exists and has role admin, if not create it and add it to the role
         User? existingAdminUser = await _userManager.FindByEmailAsync(adminUser.Email);
 
