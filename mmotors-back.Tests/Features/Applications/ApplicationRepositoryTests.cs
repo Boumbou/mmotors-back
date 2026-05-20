@@ -461,9 +461,17 @@ namespace mmotors_back.Tests.Features.Applications
 
                 await context.SaveChangesAsync();
                 var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Customer")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var userClaimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
                 // Act
-                await repository.SubmitApplicationAsync(application.Id);
+                await repository.SubmitApplicationAsync(application.Id, userClaimsPrincipal);
 
                 // Assert
                 var updatedApplication = await context.Applications.FindAsync(application.Id);
@@ -493,8 +501,17 @@ namespace mmotors_back.Tests.Features.Applications
                 await context.SaveChangesAsync();
                 var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
 
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Customer")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var userClaimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
                 // Act
-                await repository.SubmitApplicationAsync(application.Id);
+                await repository.SubmitApplicationAsync(application.Id, userClaimsPrincipal);
 
                 // Assert
                 var updatedApplication = await context.Applications.FindAsync(application.Id);
@@ -525,8 +542,17 @@ namespace mmotors_back.Tests.Features.Applications
                 await context.SaveChangesAsync();
                 var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
 
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Customer")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var userClaimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
                 // Act & Assert
-                await Assert.ThrowsAsync<InvalidOperationException>(() => repository.SubmitApplicationAsync(application.Id));
+                await Assert.ThrowsAsync<InvalidOperationException>(() => repository.SubmitApplicationAsync(application.Id, userClaimsPrincipal));
             }
         #endregion
 
@@ -634,13 +660,13 @@ namespace mmotors_back.Tests.Features.Applications
                 var userClaims = new Claim[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
-                    new Claim(ClaimTypes.Role, "User")
+                    new Claim(ClaimTypes.Role, "Customer")
                 };
                 var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-
                 // Act & assert
+
                 await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repository.HoldApplicationAsync(application.Id, claimsPrincipal));
 
                 // Assert
@@ -659,6 +685,262 @@ namespace mmotors_back.Tests.Features.Applications
 
         #region ReviewApplicationAsync tests
             //TODO: implement tests for ReviewApplicationAsync method
+            //test review application when the application is in submitted status and is approved
+            [Fact]
+            public async Task ReviewApplicationAsync_ShouldApproveApplication_WhenApplicationIsInSubmittedStatusAndIsApproved()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object); 
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);  
+
+                //create review application dto
+                var reviewApplicationDto = new ReviewApplicationDto
+                {
+                    ApplicationId = application.Id,
+                    IsApproved = true,
+                    RejectionReason = null
+                };
+
+                // Act
+                await repository.ReviewApplicationAsync(reviewApplicationDto, claimsPrincipal);
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)                {
+                    Assert.Equal(ApplicationStatus.APPROVED, updatedApplication.Status);
+                    Assert.Null(updatedApplication.RejectionReason);
+                }
+                else {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+            //test review application when the application is in submitted status and is rejected
+            [Fact]
+            public async Task ReviewApplicationAsync_ShouldRejectApplication_WhenApplicationIsInSubmittedStatusAndIsRejected()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;   
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                //create review application dto
+                var reviewApplicationDto = new ReviewApplicationDto
+                {
+                    ApplicationId = application.Id,
+                    IsApproved = false,
+                    RejectionReason = "Application does not meet the requirements."
+                };
+
+                // Act
+                await repository.ReviewApplicationAsync(reviewApplicationDto, claimsPrincipal);
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)                {
+                    Assert.Equal(ApplicationStatus.REJECTED, updatedApplication.Status);
+                    Assert.Equal(reviewApplicationDto.RejectionReason, updatedApplication.RejectionReason);
+                }
+                else {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+            //test review application when the application is not in submitted status
+            [Fact]
+            public async Task ReviewApplicationAsync_ShouldThrowInvalidOperationException_WhenApplicationIsNotInSubmittedStatus()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;   
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                //create review application dto
+                var reviewApplicationDto = new ReviewApplicationDto
+                {
+                    ApplicationId = application.Id,
+                    IsApproved = true,
+                    RejectionReason = null
+                };
+
+                // Act & Assert
+                await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => repository.ReviewApplicationAsync(reviewApplicationDto, claimsPrincipal)
+                );
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)                {
+                    Assert.Equal(application.Status, updatedApplication.Status);
+                    Assert.Null(updatedApplication.RejectionReason);  
+                }
+                else {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }   
+
+            //test review application when the user is not staff or admin
+            [Fact]
+            public async Task ReviewApplicationAsync_ShouldThrowUnauthorizedAccessException_WhenUserIsNotStaffOrAdmin()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+                
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object); 
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Customer")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                //create review application dto
+                var reviewApplicationDto = new ReviewApplicationDto
+                {
+                    ApplicationId = application.Id,
+                    IsApproved = true,      
+                    RejectionReason = null
+                };
+
+                // Act & Assert
+                await Assert.ThrowsAsync<UnauthorizedAccessException>(
+                    () => repository.ReviewApplicationAsync(reviewApplicationDto, claimsPrincipal)
+                );
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)                {
+                    Assert.Equal(application.Status, updatedApplication.Status);
+                    Assert.Null(updatedApplication.RejectionReason);
+                }
+                else {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+            //test review application reject other users applications
+            [Fact]
+            public async Task ReviewApplicationAsync_ShouldRejectOtherApplication_WhenApplicationIsApproved()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+                
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                var otherApplication = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                var thirdApplication = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                
+                context.Applications.Add(application);
+                context.Applications.Add(otherApplication);
+                context.Applications.Add(thirdApplication);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object); 
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                //create review application dto
+                var reviewApplicationDto = new ReviewApplicationDto
+                {
+                    ApplicationId = application.Id,
+                    IsApproved = true,
+                    RejectionReason = null
+                };
+
+                // Act
+                await repository.ReviewApplicationAsync(reviewApplicationDto, claimsPrincipal);
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)                {
+                    Assert.Equal(ApplicationStatus.APPROVED, updatedApplication.Status);
+                    Assert.Null(updatedApplication.RejectionReason);
+
+                    //other applications otherApplication and thirdApplication should be rejected
+                    var updatedOtherApplications = await context.Applications.Where(a => a.VehicleId == application.VehicleId && a.Id != application.Id).ToListAsync();
+                    
+                    if(updatedOtherApplications.Count > 0)
+                    {
+                        Assert.All(
+                            updatedOtherApplications, 
+                            a => 
+                                {
+                                    Assert.Equal(ApplicationStatus.REJECTED, a.Status);
+                                    Assert.NotNull(a.RejectionReason);
+                                }
+                        );
+                    }else {
+                        Assert.NotNull(updatedOtherApplications);
+                    }
+                }
+                else {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
         #endregion
 
     }

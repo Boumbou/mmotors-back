@@ -175,17 +175,35 @@ namespace mmotors_back.Features.Applications.Controllers
                 return BadRequest("ID de candidature invalide.");
             }
 
-            //check if staff or admin has access
-            IActionResult authorizationResult = await _checkAuthorization.IsUserAuthorized(User, id);
-            if (authorizationResult is not OkResult)
-            {                    
-                return authorizationResult;
-            }
-
             try
             {
                 await _applicationsRepository.HoldApplicationAsync(id, User);
                 return Ok("Application mise en attente avec succès.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+    
+
+        [HttpPost("{id}/review")]
+        [Authorize(Policy = "RequireStaffOrAdminRole")]
+        public async Task<IActionResult> ReviewApplication([FromQuery]int id, [FromBody] ReviewApplicationDto reviewApplication)
+        {
+            if (id <= 0)
+            {
+                return BadRequest("ID de candidature invalide.");
+            }
+
+            try
+            {
+                await _applicationsRepository.ReviewApplicationAsync(reviewApplication, User);
+                return Ok("Dossier traité avec succès.");
             }
             catch (KeyNotFoundException ex)
             {

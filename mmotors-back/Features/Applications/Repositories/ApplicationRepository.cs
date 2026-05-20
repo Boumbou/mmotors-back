@@ -228,7 +228,13 @@ namespace mmotors_back.Features.Applications.Repositories
 
         public async Task SubmitApplicationAsync(int id, ClaimsPrincipal? userClaims = null)
         {
-            //TODO: find application by id, check if it is in DRAFT or ON_HOLD status, if yes update its status to SUBMITTED and set submittedAt to now, if not throw an exception
+            //check user role
+            var userRole = userClaims?.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Customer")
+            {
+                throw new UnauthorizedAccessException("Action non autorisée.");
+            }
+
             var application = await _context.Applications.FindAsync(id);
             if (application == null)            {
                 throw new KeyNotFoundException($"Application with ID {id} not found.");
@@ -247,7 +253,7 @@ namespace mmotors_back.Features.Applications.Repositories
         {
             //check user role
             var userRole = userClaims?.FindFirstValue(ClaimTypes.Role);
-            if (userRole != "Staff" && userRole != "Admin")
+            if (userRole == "Customer")
             {
                 throw new UnauthorizedAccessException("Action non autorisée.");
             }
@@ -270,11 +276,56 @@ namespace mmotors_back.Features.Applications.Repositories
 
         public async Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication, ClaimsPrincipal? userClaims = null)
         {
-            //TODO: get user id from claim name
-            //TODO: find application by id, check if it is in SUBMITTED status, if yes update its status to APPROVED or REJECTED based on isApproved parameter, set reviewedByUserId to reviewerUserId, set reviewedAt to now, if rejected set rejectionReason, if not throw an exception
-            throw new NotImplementedException();
+            // check user role
+            var userRole = userClaims?.FindFirstValue(ClaimTypes.Role);
+            if (userRole == "Customer")
+            {
+                throw new UnauthorizedAccessException("Action non autorisée.");
+            }
+
+            // get application
+            var application = await _context.Applications.FindAsync(reviewApplication.ApplicationId);
+            if (application == null)            {
+                throw new KeyNotFoundException($"Le dossier {reviewApplication.ApplicationId} est introuvable.");
+            }
+
+            // validate application status
+            if (application.Status != ApplicationStatus.SUBMITTED)
+            {
+                throw new InvalidOperationException("Seules les candidatures en statut SOUMISE peuvent être examinées.");
+            }
+
+            // update application status based on review decision
+            if (reviewApplication.IsApproved)
+            {
+                application.Status = ApplicationStatus.APPROVED;
+                application.RejectionReason = null;
+            }
+            else
+            {
+                application.Status = ApplicationStatus.REJECTED;
+                application.RejectionReason = reviewApplication.RejectionReason;
+            }
+
+            _context.Applications.Update(application);
+            await _context.SaveChangesAsync();
+
+            //turn other application for the same vehicle to rejected
+            var otherApplications = await _context.Applications
+                .Where(a => a.VehicleId == application.VehicleId && a.Id != application.Id)
+                .ToListAsync();
+            if (otherApplications.Count > 0)
+            {
+                foreach (var otherApp in otherApplications)
+                {
+                    otherApp.Status = ApplicationStatus.REJECTED;
+                    otherApp.RejectionReason = "Un autre dossier a été approuvé pour ce véhicule.";
+                }
+
+                _context.Applications.UpdateRange(otherApplications);
+            }
+
+            await _context.SaveChangesAsync();
         }
-
-
     }
 }
