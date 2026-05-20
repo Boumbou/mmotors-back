@@ -941,6 +941,56 @@ namespace mmotors_back.Tests.Features.Applications
                 }
             }
 
+            //test review application, turn vehicle into unavailable when application is approved
+            [Fact]
+            public async Task ReviewApplicationAsync_ShouldTurnVehicleUnavailable_WhenApplicationIsApproved()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+                
+                await using var context = new AppDbContext(options);
+                var vehicle = new Vehicle { Brand = "Toyota", Model = "Corolla", Year = 2020, Status = VehicleStatus.AVAILABLE };
+                context.Vehicles.Add(vehicle);
+                await context.SaveChangesAsync();
+
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = vehicle.Id, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();   
+
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                //create review application dto
+                var reviewApplicationDto = new ReviewApplicationDto
+                {
+                    ApplicationId = application.Id,
+                    IsApproved = true,
+                    RejectionReason = null
+                };
+
+                // Act
+                await repository.ReviewApplicationAsync(reviewApplicationDto, claimsPrincipal);
+
+                // Assert
+                var updatedVehicle = await context.Vehicles.FindAsync(vehicle.Id);
+                if (updatedVehicle != null)                {
+                    Assert.False(updatedVehicle.Status == VehicleStatus.AVAILABLE);     
+                }
+                else {
+                    Assert.NotNull(updatedVehicle); 
+                }
+            }
+
         #endregion
 
     }

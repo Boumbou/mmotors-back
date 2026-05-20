@@ -310,21 +310,30 @@ namespace mmotors_back.Features.Applications.Repositories
             _context.Applications.Update(application);
             await _context.SaveChangesAsync();
 
-            //turn other application for the same vehicle to rejected
-            var otherApplications = await _context.Applications
-                .Where(a => a.VehicleId == application.VehicleId && a.Id != application.Id)
-                .ToListAsync();
-            if (otherApplications.Count > 0)
+            if (application.Status == ApplicationStatus.APPROVED)
             {
-                foreach (var otherApp in otherApplications)
+                //turn other application for the same vehicle to rejected
+
+                var otherApplications = await _context.Applications
+                    .Where(a => a.VehicleId == application.VehicleId && a.Id != application.Id)
+                    .ToListAsync();
+                if (otherApplications.Count > 0)
                 {
-                    otherApp.Status = ApplicationStatus.REJECTED;
-                    otherApp.RejectionReason = "Un autre dossier a été approuvé pour ce véhicule.";
+                    foreach (var otherApp in otherApplications)
+                    {
+                        otherApp.Status = ApplicationStatus.REJECTED;
+                        otherApp.RejectionReason = "Un autre dossier a été approuvé pour ce véhicule.";
+                    }
+
+                    _context.Applications.UpdateRange(otherApplications);
                 }
 
-                _context.Applications.UpdateRange(otherApplications);
+                //update vehicle status if approved
+                var vehicle = await _context.Vehicles.FindAsync(application.VehicleId);
+                if (vehicle != null)                {
+                    vehicle.Status = vehicle.ListingType == ListingType.SALE ? VehicleStatus.SOLD : VehicleStatus.RENTED;
+                }
             }
-
             await _context.SaveChangesAsync();
         }
     }

@@ -193,7 +193,7 @@ namespace mmotors_back.Features.Applications.Controllers
 
         [HttpPost("{id}/review")]
         [Authorize(Policy = "RequireStaffOrAdminRole")]
-        public async Task<IActionResult> ReviewApplication([FromQuery]int id, [FromBody] ReviewApplicationDto reviewApplication)
+        public async Task<IActionResult> ReviewApplication(int id, [FromBody] ReviewApplicationDto reviewApplication)
         {
             if (id <= 0)
             {
