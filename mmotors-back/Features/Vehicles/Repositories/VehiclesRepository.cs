@@ -77,7 +77,7 @@ namespace mmotors_back.Features.Vehicles.Repositories
                 throw new KeyNotFoundException($"Vehicle with id {id} not found.");
             }
 
-            return VehicleMapper.ToDTO(vehicle);
+            return VehicleMapper.ToDTO(vehicle, includeApplications: true);
         }
 
         public async Task<VehicleDto> AddVehicleAsync(CreateVehicleDto vehicle, ClaimsPrincipal user)
