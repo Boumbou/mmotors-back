@@ -28,7 +28,8 @@ namespace mmotors_back.Mappers
                 ListingType = vehicle.ListingType,
                 Status = vehicle.Status,
                 ImageUrl = vehicle.ImageUrl,
-                ImageKey = vehicle.ImageKey
+                ImageKey = vehicle.ImageKey,
+                Applications = vehicle.Applications?.Select(a => ApplicationMapper.ToDto(a)).ToList() // Map applications if they exist
             };
         }
 
@@ -44,8 +45,8 @@ namespace mmotors_back.Mappers
                 ListedAmount = createVehicleDto.ListedAmount,
                 RentalTermMonths = createVehicleDto.RentalTermMonths,
                 ListingType = createVehicleDto.ListingType,
-                ImageUrl = createVehicleDto.ImageUrl,
-                ImageKey = createVehicleDto.ImageKey
+                ImageUrl = createVehicleDto.ImageUrl ?? null,
+                ImageKey = createVehicleDto.ImageKey ?? null
             };
         }
     }

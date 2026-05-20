@@ -55,14 +55,14 @@ namespace mmotors_back.Features.Vehicles.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Staff")]
-        public async Task<IActionResult> AddVehicle([FromBody] VehicleDto vehicle)
+        public async Task<IActionResult> AddVehicle([FromBody] CreateVehicleDto vehicle)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            await _vehiclesRepository.AddVehicleAsync(vehicle);
-            return CreatedAtAction(nameof(GetVehicleById), new { id = vehicle.Id }, vehicle);
+            var createdVehicle = await _vehiclesRepository.AddVehicleAsync(vehicle, User);
+            return CreatedAtAction(nameof(GetVehicleById), new { id = createdVehicle.Id }, createdVehicle);
         }
 
         [HttpPut("{id}")]
@@ -77,7 +77,7 @@ namespace mmotors_back.Features.Vehicles.Controllers
             {
                 return BadRequest("Vehicle ID mismatch");
             }
-            await _vehiclesRepository.UpdateVehicleAsync(vehicle);
+            await _vehiclesRepository.UpdateVehicleAsync(vehicle, User);
             return NoContent();
         }
 
@@ -85,7 +85,7 @@ namespace mmotors_back.Features.Vehicles.Controllers
         [Authorize(Roles = "Staff")]
         public async Task<IActionResult> DeleteVehicle(int id)
         {
-            await _vehiclesRepository.DeleteVehicleAsync(id);
+            await _vehiclesRepository.DeleteVehicleAsync(id, User);
             return NoContent();
         }
     }

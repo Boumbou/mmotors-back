@@ -14,6 +14,7 @@ using mmotors_back.Features.Shared.Interfaces;
 using mmotors_back.Models;
 using mmotors_back.Mappers;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace mmotors_back.Features.Vehicles.Repositories
 {
@@ -29,7 +30,7 @@ namespace mmotors_back.Features.Vehicles.Repositories
             
         }
 
-        public async Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams paginationParams = null)
+        public async Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams? paginationParams = null)
         {
             ListingType? listingType = Enum.TryParse<ListingType>(type,true, out ListingType result) ? result : (ListingType?)null;
 
@@ -67,7 +68,9 @@ namespace mmotors_back.Features.Vehicles.Repositories
 
         public async Task<VehicleDto> GetVehicleByIdAsync(int id)
         {
-            var vehicle = await _context.Vehicles.FindAsync(id);
+            var vehicle = await _context.Vehicles
+                .Include(v => v.Applications)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vehicle == null)
             {
@@ -77,19 +80,89 @@ namespace mmotors_back.Features.Vehicles.Repositories
             return VehicleMapper.ToDTO(vehicle);
         }
 
-        public async Task AddVehicleAsync(VehicleDto vehicle)
+        public async Task<VehicleDto> AddVehicleAsync(CreateVehicleDto vehicle, ClaimsPrincipal user)
         {
-            throw new NotImplementedException();
+            //check role
+            if(user.IsInRole("Customer"))
+            {
+                throw new UnauthorizedAccessException("Action non autorisée pour les clients.");
+            }
+
+            if(vehicle.ListingType == ListingType.RENTAL && !vehicle.RentalTermMonths.HasValue)
+            {
+                throw new ArgumentException("La durée de location doit être spécifiée pour les véhicules en location.");
+            }
+
+            if(vehicle.ListingType == ListingType.SALE)
+            {
+                vehicle.RentalTermMonths = null; // Ensure rental term is null for sale listings
+            }
+
+            var newVehicle = VehicleMapper.ToEntity(vehicle);
+            _context.Vehicles.Add(newVehicle);
+            await _context.SaveChangesAsync();
+            return VehicleMapper.ToDTO(newVehicle);
         }
 
-        public async Task UpdateVehicleAsync(VehicleDto vehicle)
+        public async Task UpdateVehicleAsync(VehicleDto vehicle, ClaimsPrincipal user)
         {
-            throw new NotImplementedException();
+            //check role
+            if(user.IsInRole("Customer"))
+            {
+                throw new UnauthorizedAccessException("Action non autorisée pour les clients.");
+            }
+
+            var existingVehicle = await _context.Vehicles.FindAsync(vehicle.Id);
+
+            if (existingVehicle == null)
+            {
+                throw new KeyNotFoundException($"Vehicle with id {vehicle.Id} not found.");
+            }
+
+            existingVehicle.Brand = vehicle.Brand;
+            existingVehicle.Model = vehicle.Model;
+            existingVehicle.Year = vehicle.Year;
+            existingVehicle.Motorization = vehicle.Motorization;
+            existingVehicle.Mileage = vehicle.Mileage;
+            existingVehicle.ListedAmount = vehicle.ListedAmount;
+            existingVehicle.RentalTermMonths = vehicle.ListingType == ListingType.SALE ? null : vehicle.RentalTermMonths;
+            existingVehicle.ListingType = vehicle.ListingType;
+            existingVehicle.Status = vehicle.Status;
+            existingVehicle.ImageUrl = vehicle.ImageUrl;
+            existingVehicle.ImageKey = vehicle.ImageKey;
+            existingVehicle.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteVehicleAsync(int id)
+        public async Task DeleteVehicleAsync(int id, ClaimsPrincipal user)
         {
-            throw new NotImplementedException();
+            //check role
+            if(user.IsInRole("Customer"))
+            {
+                throw new UnauthorizedAccessException("Action non autorisée pour les clients.");
+            }
+
+            var vehicle = await _context.Vehicles
+                .Include(v => v.Applications)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vehicle == null)
+            {
+                throw new KeyNotFoundException($"Vehicle with id {id} not found.");
+            }
+
+            if (
+                vehicle.Applications.Any(a => a.Status == ApplicationStatus.SUBMITTED || 
+                a.Status == ApplicationStatus.ON_HOLD || 
+                (a.Status == ApplicationStatus.APPROVED && a.Vehicle.ListingType == ListingType.RENTAL)
+                )
+            ){
+                throw new InvalidOperationException("Action non autorisée pour les véhicules avec des candidatures ou des contrats en cours.");
+            }
+
+            _context.Vehicles.Remove(vehicle);
+            await _context.SaveChangesAsync();
         }
     }
 }

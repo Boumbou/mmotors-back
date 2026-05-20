@@ -8,6 +8,7 @@
 */
 
 using System.ComponentModel.DataAnnotations;
+using mmotors_back.Features.Applications.Dtos;
 using mmotors_back.Models;
 
 namespace mmotors_back.Features.Vehicles.Dtos;
@@ -26,6 +27,8 @@ public class VehicleDto
     public VehicleStatus Status { get; set; } // AVAILABLE, SOLD, RENTED
     public string? ImageUrl { get; set; }
     public string? ImageKey { get; set; }
+
+    public IEnumerable<ApplicationDto>? Applications { get; set; } // Include applications for this vehicle
 }
 
 public class CreateVehicleDto
