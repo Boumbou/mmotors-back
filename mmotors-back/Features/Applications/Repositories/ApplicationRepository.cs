@@ -108,8 +108,24 @@ namespace mmotors_back.Features.Applications.Repositories
             return ApplicationMapper.ToDto(newApplication);
         }
 
-        public async Task<ApplicationDto> GetApplicationByIdAsync(int id)
+        public async Task<ApplicationDto> GetApplicationByIdAsync(int id, ClaimsPrincipal? userClaims = null)
         {
+            
+            // check if user has access to the application
+            var targetApplication = await _context.Applications.FindAsync(id);
+            if (targetApplication == null)            {
+                throw new KeyNotFoundException($"Application with ID {id} not found.");
+            }
+
+            if (userClaims != null && userClaims.IsInRole("Customer"))
+            {
+                string currentUserId = userClaims.FindFirstValue(ClaimTypes.Name) ?? "";
+                if (targetApplication.UserId != currentUserId)
+                {
+                    throw new UnauthorizedAccessException("You do not have access to this application.");
+                }
+            }
+            
             var query = _context.Applications
                 .Where(a => a.Id == id)
                 .Include(a => a.ApplicationServices)
@@ -122,11 +138,21 @@ namespace mmotors_back.Features.Applications.Repositories
             {
                 throw new KeyNotFoundException($"Application with ID {id} not found.");
             }
+
+            //check if user has access to the application
+            var userRole = userClaims?.FindFirstValue(ClaimTypes.Role);
+            var userId = userClaims?.FindFirstValue(ClaimTypes.Name);
+            if (userRole == "Customer" && application.UserId != userId)
+            {
+                throw new UnauthorizedAccessException("You do not have access to this application.");
+            }
+
             return ApplicationMapper.ToDto(application);
         }
 
         public async Task<PagedResults<ApplicationDto>> GetAllApplicationsAsync(PaginationParams? paginationParams = null, ClaimsPrincipal? userClaims = null)
         {
+            
             var query = _context.Applications.AsQueryable();
             //add filtering bbased on user if role is Customer
             if (userClaims != null && userClaims.IsInRole("Customer"))
@@ -151,7 +177,7 @@ namespace mmotors_back.Features.Applications.Repositories
             };
         }
 
-        public async Task DeleteApplicationAsync(int applicationId, ClaimsPrincipal userClaims)
+        public async Task DeleteApplicationAsync(int applicationId, ClaimsPrincipal? userClaims = null)
         {
             var application = await _context.Applications.FindAsync(applicationId);
             if (application == null)
@@ -160,7 +186,7 @@ namespace mmotors_back.Features.Applications.Repositories
             }
 
             //check if application is in draft and if user is staff or admin
-            var userRole = userClaims.FindFirstValue(ClaimTypes.Role);
+            var userRole = userClaims?.FindFirstValue(ClaimTypes.Role);
             if (application.Status == ApplicationStatus.DRAFT  && (userRole != "Customer"))
             {
                 throw new InvalidOperationException("Seules les dossier soumis peuvent être supprimés par le personnel ou l'administrateur.");
@@ -200,19 +226,49 @@ namespace mmotors_back.Features.Applications.Repositories
             throw new NotImplementedException();
         }
 
-        public async Task SubmitApplicationAsync(int id)
+        public async Task SubmitApplicationAsync(int id, ClaimsPrincipal? userClaims = null)
         {
             //TODO: find application by id, check if it is in DRAFT or ON_HOLD status, if yes update its status to SUBMITTED and set submittedAt to now, if not throw an exception
-            throw new NotImplementedException();
+            var application = await _context.Applications.FindAsync(id);
+            if (application == null)            {
+                throw new KeyNotFoundException($"Application with ID {id} not found.");
+            }
+            if (application.Status != ApplicationStatus.DRAFT && application.Status != ApplicationStatus.ON_HOLD)
+            {
+                throw new InvalidOperationException("Only applications in DRAFT or ON_HOLD status can be submitted.");
+            }
+            application.Status = ApplicationStatus.SUBMITTED;
+            application.SubmittedAt = DateTime.UtcNow;
+            _context.Applications.Update(application);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task HoldApplicationAsync(int id)
+        public async Task HoldApplicationAsync(int id, ClaimsPrincipal? userClaims = null)
         {
-            //TODO: find application by id, check if it is in SUBMITTED status, if yes update its status to ON_HOLD, if not throw an exception
-            throw new NotImplementedException();
+            //check user role
+            var userRole = userClaims?.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Staff" && userRole != "Admin")
+            {
+                throw new UnauthorizedAccessException("Action non autorisée.");
+            }
+
+            var application = await _context.Applications.FindAsync(id);
+            if (application == null)
+            {
+                throw new KeyNotFoundException($"Impossible de mettre en attente la candidature avec l'ID {id} car elle est introuvable.");
+            }
+
+            if (application.Status != ApplicationStatus.SUBMITTED)
+            {
+                throw new InvalidOperationException("Seules les candidatures en statut SOUMISE peuvent être mises en attente.");
+            }
+
+            application.Status = ApplicationStatus.ON_HOLD;
+            _context.Applications.Update(application);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication)
+        public async Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication, ClaimsPrincipal? userClaims = null)
         {
             //TODO: get user id from claim name
             //TODO: find application by id, check if it is in SUBMITTED status, if yes update its status to APPROVED or REJECTED based on isApproved parameter, set reviewedByUserId to reviewerUserId, set reviewedAt to now, if rejected set rejectionReason, if not throw an exception
