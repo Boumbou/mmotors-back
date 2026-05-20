@@ -63,20 +63,14 @@ namespace mmotors_back.Features.Applications.Repositories
                     ApplicationId = newApplication.Id,
                     AppliedOverheadType = service.OverheadType,
                     AppliedOverheadValue = service.OverheadValue,
-                    CalculatedOverheadAmount = service.OverheadType switch
-                    {
-                        OverheadType.FIXED_AMOUNT => service.OverheadValue,
-                        OverheadType.PERCENTAGE => (service.OverheadValue / 100) * newApplication.BaseAmount,
-                        _ => 0
-                    }
+                    CalculatedOverheadAmount =  (service.OverheadType == OverheadType.FIXED_AMOUNT) ? service.OverheadValue :
+                        service.OverheadValue * newApplication.BaseAmount
                 });
             }
 
             //calculate total overhead amount and total amount
             newApplication.TotalOverheadAmount = newApplication.ApplicationServices.Sum(s => s.CalculatedOverheadAmount);
             newApplication.TotalAmount = newApplication.BaseAmount + newApplication.TotalOverheadAmount;
-
-
             
             //add expected documents based on listing type
             var expectedDocuments = await _context.DocumentTemplates.Where(
@@ -96,6 +90,21 @@ namespace mmotors_back.Features.Applications.Repositories
             
             _context.Applications.Add(newApplication);
             await _context.SaveChangesAsync();
+
+            //get full application with related data to return as dto
+            newApplication = await _context.Applications
+                .Where(a => a.Id == newApplication.Id)
+                .Include(a => a.ApplicationServices)
+                .Include(a => a.Documents)
+                .Include(a => a.User)
+                .Include(a => a.Vehicle).AsSplitQuery().AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            if (newApplication == null)
+            {
+                throw new Exception("Failed to create application.");
+            }
+
             return ApplicationMapper.ToDto(newApplication);
         }
 
@@ -105,8 +114,8 @@ namespace mmotors_back.Features.Applications.Repositories
                 .Where(a => a.Id == id)
                 .Include(a => a.ApplicationServices)
                 .Include(a => a.Documents)
-                .Include(a => a.Vehicle)
-                .Include(a => a.User);
+                .Include(a => a.User)
+                .Include(a => a.Vehicle).AsSplitQuery().AsNoTracking();
 
             Application? application = await query.FirstOrDefaultAsync();
             if (application == null)
@@ -142,13 +151,33 @@ namespace mmotors_back.Features.Applications.Repositories
             };
         }
 
-        public async Task DeleteApplicationAsync(int applicationId)
+        public async Task DeleteApplicationAsync(int applicationId, ClaimsPrincipal userClaims)
         {
             var application = await _context.Applications.FindAsync(applicationId);
             if (application == null)
             {
                 throw new KeyNotFoundException($"Application with ID {applicationId} not found.");
             }
+
+            //check if application is in draft and if user is staff or admin
+            var userRole = userClaims.FindFirstValue(ClaimTypes.Role);
+            if (application.Status == ApplicationStatus.DRAFT  && (userRole != "Customer"))
+            {
+                throw new InvalidOperationException("Seules les dossier soumis peuvent être supprimés par le personnel ou l'administrateur.");
+            }
+
+            if (application.Status != ApplicationStatus.DRAFT && userRole == "Customer")
+            {
+                throw new InvalidOperationException("Seules les dossiers brouillons peuvent être supprimés par le client.");
+            }
+
+
+            // delete application services and document first due to foreign key constraints
+            var applicationServices = _context.ApplicationServices.Where(s => s.ApplicationId == applicationId);
+            _context.ApplicationServices.RemoveRange(applicationServices);
+            var documents = _context.Documents.Where(d => d.ApplicationId == applicationId);
+            _context.Documents.RemoveRange(documents);
+
 
             _context.Applications.Remove(application);
             await _context.SaveChangesAsync();
