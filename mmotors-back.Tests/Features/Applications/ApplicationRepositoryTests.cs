@@ -61,6 +61,11 @@ namespace mmotors_back.Tests.Features.Applications
 
                 await using var context = new AppDbContext(options);
 
+                //create user and vehicle to satisfy foreign key constraints
+                string userGuid = Guid.NewGuid().ToString();
+                context.Users.Add(new User { Id = userGuid, UserName = "testuser" });
+                await context.SaveChangesAsync();
+
                 context.Vehicles.Add(new Vehicle { Id = 1, Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE });
                 await context.SaveChangesAsync();
 
@@ -68,7 +73,7 @@ namespace mmotors_back.Tests.Features.Applications
 
                 var application = new CreateApplicationDto
                 {
-                    UserId = Guid.NewGuid().ToString(),
+                    UserId = userGuid,
                     VehicleId = 1,
                 };
 
@@ -93,6 +98,11 @@ namespace mmotors_back.Tests.Features.Applications
 
                 await using var context = new AppDbContext(options);
 
+                //create user, vehicle, service and document template to satisfy foreign key constraints and application creation requirements
+                string userGuid = Guid.NewGuid().ToString();
+                context.Users.Add(new User { Id = userGuid, UserName = "testuser" });
+                await context.SaveChangesAsync();
+
                 context.Vehicles.Add(new Vehicle { Id = 1, Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE });
                 context.Services.Add(new Service { Id = 1, Name = "Service 1", Description = "Service 1 Description", OverheadType = OverheadType.FIXED_AMOUNT, OverheadValue = 500 });
                 context.DocumentTemplates.Add(new DocumentTemplate { Id = 1, Name = "Document 1", Type = DocumentType.COMMON_APPLICATION, IsActive = true });
@@ -103,7 +113,7 @@ namespace mmotors_back.Tests.Features.Applications
 
                 var application = new CreateApplicationDto
                 {
-                    UserId = Guid.NewGuid().ToString(),
+                    UserId = userGuid,
                     VehicleId = 1,
                     ApplicationType = ListingType.RENTAL,
                     BaseAmount = 20000,
@@ -208,6 +218,47 @@ namespace mmotors_back.Tests.Features.Applications
                 await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
                 {
                     await repository.GetApplicationByIdAsync(999); // Assuming 999 is an ID that does not exist
+                });
+            }
+        
+            //test get application by id when the the user does not have access to the application
+            [Fact]
+            public async Task GetApplicationByIdAsync_ShouldThrowUnauthorizedAccessException_WhenUserDoesNotHaveAccessToApplication()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+
+                //add vehicle and user to satisfy foreign key constraints
+                context.Vehicles.Add(new Vehicle { Id = 1, Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE });
+                await context.SaveChangesAsync();
+
+                string userGuid = Guid.NewGuid().ToString();
+                context.Users.Add(new User { Id = userGuid, UserName = "testuser" });
+                await context.SaveChangesAsync();
+
+                //create claim for testuser
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Customer")
+                };
+                var identity = new ClaimsIdentity(claims, "TestAuthType");
+                var userClaims = new ClaimsPrincipal(identity);
+
+                var application = new Application { UserId = userGuid, VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                // Act & Assert
+                await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                {
+                    // Assuming the method checks for user access and the current user does not have access to the application
+                    await repository.GetApplicationByIdAsync(application.Id, userClaims);
                 });
             }
         #endregion
@@ -393,11 +444,217 @@ namespace mmotors_back.Tests.Features.Applications
         #endregion
 
         #region SubmitApplicationAsync tests
-            //TODO: implement tests for SubmitApplicationAsync method
+            //test submit application when the application is in draft status
+            [Fact]
+            public async Task SubmitApplicationAsync_ShouldSubmitApplication_WhenApplicationIsInDraftStatus()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+
+
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                context.Applications.Add(application);
+
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                // Act
+                await repository.SubmitApplicationAsync(application.Id);
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if(updatedApplication != null)
+                {
+                    Assert.Equal(ApplicationStatus.SUBMITTED, updatedApplication.Status);
+                    Assert.NotNull(updatedApplication.SubmittedAt);
+                }
+                else
+                {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+            //test submit application when the application is in On_Hold status
+            [Fact]
+            public async Task SubmitApplicationAsync_ShouldSubmitApplication_WhenApplicationIsInOnHoldStatus()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.ON_HOLD };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                // Act
+                await repository.SubmitApplicationAsync(application.Id);
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+
+                if (updatedApplication != null)
+                {
+                    Assert.Equal(ApplicationStatus.SUBMITTED, updatedApplication.Status);
+                    Assert.NotNull(updatedApplication.SubmittedAt);
+                }
+                else
+                {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+            //test submit application when the application is not in draft or on hold status
+            [Fact]
+            public async Task SubmitApplicationAsync_ShouldThrowInvalidOperationException_WhenApplicationIsNotInDraftOrOnHoldStatus()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                // Act & Assert
+                await Assert.ThrowsAsync<InvalidOperationException>(() => repository.SubmitApplicationAsync(application.Id));
+            }
         #endregion
 
         #region HoldApplicationAsync tests
             //TODO: implement tests for HoldApplicationAsync method
+            //test hold application when the application is in submitted status
+            [Fact]
+            public async Task HoldApplicationAsync_ShouldHoldApplication_WhenApplicationIsInSubmittedStatus()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+
+
+                // Act
+                await repository.HoldApplicationAsync(application.Id, claimsPrincipal);
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)
+                {
+                    Assert.Equal(ApplicationStatus.ON_HOLD, updatedApplication.Status);
+                }
+                else
+                {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+            //test hold application when the application is not in submitted status
+            [Fact]
+            public async Task HoldApplicationAsync_ShouldNotHoldApplication_WhenApplicationIsNotInSubmittedStatus()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+
+
+                // Act & assert
+                await Assert.ThrowsAsync<InvalidOperationException>(() => repository.HoldApplicationAsync(application.Id, claimsPrincipal));
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)
+                {
+                    Assert.Equal(application.Status, updatedApplication.Status);
+                }
+                else
+                {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+            //test hold application when the user is not staff or admin
+            [Fact]
+            public async Task HoldApplicationAsync_ShouldThrowUnauthorizedAccessException_WhenUserIsNotStaffOrAdmin()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;   
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object); 
+
+                //create claims
+                var userClaims = new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "User")
+                };
+                var claimsIdentity = new ClaimsIdentity(userClaims, "mock");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+
+                // Act & assert
+                await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repository.HoldApplicationAsync(application.Id, claimsPrincipal));
+
+                // Assert
+                var updatedApplication = await context.Applications.FindAsync(application.Id);
+                if (updatedApplication != null)                {
+                    Assert.Equal(application.Status, updatedApplication.Status);
+                }
+                else                {
+                    Assert.NotNull(updatedApplication); 
+                }
+            }
+
+
+        
         #endregion
 
         #region ReviewApplicationAsync tests

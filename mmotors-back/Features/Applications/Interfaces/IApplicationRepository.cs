@@ -19,14 +19,14 @@ namespace mmotors_back.Features.Applications.Interfaces
     public interface IApplicationsRepository
     {
         Task<ApplicationDto> CreateApplicationAsync(CreateApplicationDto application);
-        Task<ApplicationDto> GetApplicationByIdAsync(int id);
+        Task<ApplicationDto> GetApplicationByIdAsync(int id, ClaimsPrincipal? userClaims = null);
         Task<PagedResults<ApplicationDto>> GetApplicationsByUserIdAsync(string userId, PaginationParams? paginationParams = null);
         Task<PagedResults<ApplicationDto>> GetAllApplicationsAsync(PaginationParams? paginationParams = null, ClaimsPrincipal? userClaims = null);
         Task<PagedResults<ApplicationDto>> GetApplicationByVehicleIdAsync(int vehicleId, PaginationParams? paginationParams = null);
         Task UpdateApplicationAsync(Application application);
-        Task SubmitApplicationAsync(int applicationId);
-        Task HoldApplicationAsync(int applicationId);
-        Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication);
+        Task SubmitApplicationAsync(int applicationId, ClaimsPrincipal userClaims);
+        Task HoldApplicationAsync(int applicationId, ClaimsPrincipal userClaims);
+        Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication, ClaimsPrincipal userClaims);
         Task DeleteApplicationAsync(int applicationId, ClaimsPrincipal userClaims);
     }
 }

@@ -135,6 +135,66 @@ namespace mmotors_back.Features.Applications.Controllers
             }
         }
 
+        [HttpPost("{id}/submit")]
+        [Authorize(Policy = "RequireCustomerRole")]
+        public async Task<IActionResult> SubmitApplication(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest("ID de candidature invalide.");
+            }
 
+            //check if customer has access
+            IActionResult authorizationResult = await _checkAuthorization.IsUserAuthorized(User, id);
+            if (authorizationResult is not OkResult)
+            {                    
+                return authorizationResult;
+            }
+
+            try
+            {
+                await _applicationsRepository.SubmitApplicationAsync(id, User);
+                return Ok("Application soumise avec succès.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("{id}/hold")]
+        [Authorize(Policy = "RequireStaffOrAdminRole")]
+        public async Task<IActionResult> HoldApplication(int id)
+        {    
+            if (id <= 0)
+            {
+                return BadRequest("ID de candidature invalide.");
+            }
+
+            //check if staff or admin has access
+            IActionResult authorizationResult = await _checkAuthorization.IsUserAuthorized(User, id);
+            if (authorizationResult is not OkResult)
+            {                    
+                return authorizationResult;
+            }
+
+            try
+            {
+                await _applicationsRepository.HoldApplicationAsync(id, User);
+                return Ok("Application mise en attente avec succès.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
