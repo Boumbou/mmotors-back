@@ -13,7 +13,7 @@ namespace mmotors_back.Mappers
 {
     public class VehicleMapper
     {
-        public static VehicleDto ToDTO(Vehicle vehicle)
+        public static VehicleDto ToDTO(Vehicle vehicle, bool includeApplications = false)
         {
             return new VehicleDto
             {
@@ -29,7 +29,7 @@ namespace mmotors_back.Mappers
                 Status = vehicle.Status,
                 ImageUrl = vehicle.ImageUrl,
                 ImageKey = vehicle.ImageKey,
-                Applications = vehicle.Applications?.Select(a => ApplicationMapper.ToDto(a)).ToList() // Map applications if they exist
+                Applications = includeApplications && vehicle.Applications != null ? vehicle.Applications.Select(a => ApplicationMapper.ToDto(a)).ToList() : null // Map applications if they exist
             };
         }
 

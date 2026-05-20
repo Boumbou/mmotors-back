@@ -160,6 +160,13 @@ var builder = WebApplication.CreateBuilder(args);
 
     //add DataSeeder
     builder.Services.AddScoped<DataSeeder>();
+
+    //add storage service
+    builder.Services.AddScoped<IStorageService, LocalStorageService>(provider =>
+    {
+        var storagePath = Path.Combine("wwwroot", "uploads");
+        return new LocalStorageService(storagePath);
+    });
 #endregion
 
 #region Build App and Configure Middleware
@@ -177,6 +184,7 @@ var builder = WebApplication.CreateBuilder(args);
     app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseStaticFiles();
 
     app.MapControllers();
 

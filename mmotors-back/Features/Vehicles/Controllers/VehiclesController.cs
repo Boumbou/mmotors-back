@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using mmotors_back.Features.Vehicles.Interfaces;
 using mmotors_back.Features.Vehicles.Dtos;
 using mmotors_back.Models;
+using mmotors_back.Features.Shared.Interfaces;
 
 namespace mmotors_back.Features.Vehicles.Controllers
 {
@@ -22,10 +23,12 @@ namespace mmotors_back.Features.Vehicles.Controllers
     public class VehiclesController : ControllerBase
     {
         private readonly IVehiclesRepository _vehiclesRepository;
+        private readonly IStorageService _storageService;
 
-        public VehiclesController(IVehiclesRepository vehiclesRepository)
+        public VehiclesController(IVehiclesRepository vehiclesRepository, IStorageService storageService)
         {
             _vehiclesRepository = vehiclesRepository;
+            _storageService = storageService;
         }
 
         [HttpGet]
@@ -55,12 +58,21 @@ namespace mmotors_back.Features.Vehicles.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Staff")]
-        public async Task<IActionResult> AddVehicle([FromBody] CreateVehicleDto vehicle)
+        public async Task<IActionResult> AddVehicle([FromBody] CreateVehicleDto vehicle, [FromBody] IFormFile? image)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+            if (image != null)
+            {
+                var uploadResult = await _storageService.UploadFileAsync(image);
+                vehicle.ImageUrl = uploadResult.Url;
+                vehicle.ImageKey = uploadResult.Key;
+            }
+
+
             var createdVehicle = await _vehiclesRepository.AddVehicleAsync(vehicle, User);
             return CreatedAtAction(nameof(GetVehicleById), new { id = createdVehicle.Id }, createdVehicle);
         }
