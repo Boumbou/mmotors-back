@@ -27,6 +27,7 @@ namespace mmotors_back.Features.Applications.Dtos
         public ApplicationStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? RejectionReason { get; set; }
 
         public ICollection<ApplicationServiceDto> ApplicationServices { get; set; } = new List<ApplicationServiceDto>();
         public ICollection<DocumentDto> Documents { get; set; } = new List<DocumentDto>();
