@@ -4,6 +4,7 @@
     * it will be injected into the controllers to handle the business logic related to vehicles
     * it will use the VehicleDto to transfer data between the database and the controllers
 */
+using System.Security.Claims;
 using mmotors_back.Features.Vehicles.Dtos;
 using mmotors_back.Models;
 
@@ -13,8 +14,8 @@ namespace mmotors_back.Features.Vehicles.Interfaces
     {
         Task<PagedResults<VehicleDto>> GetAllVehiclesAsync(string? type = null, PaginationParams? paginationParams = null);
         Task<VehicleDto> GetVehicleByIdAsync(int id);
-        Task AddVehicleAsync(VehicleDto vehicle);
-        Task UpdateVehicleAsync(VehicleDto vehicle);
-        Task DeleteVehicleAsync(int id);
+        Task<VehicleDto> AddVehicleAsync(CreateVehicleDto vehicle, ClaimsPrincipal user);
+        Task UpdateVehicleAsync(VehicleDto vehicle, ClaimsPrincipal user);
+        Task DeleteVehicleAsync(int id, ClaimsPrincipal user);
     }
 }
