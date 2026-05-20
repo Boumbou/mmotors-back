@@ -27,6 +27,6 @@ namespace mmotors_back.Features.Applications.Interfaces
         Task SubmitApplicationAsync(int applicationId);
         Task HoldApplicationAsync(int applicationId);
         Task ReviewApplicationAsync(ReviewApplicationDto reviewApplication);
-        Task DeleteApplicationAsync(int applicationId);
+        Task DeleteApplicationAsync(int applicationId, ClaimsPrincipal userClaims);
     }
 }

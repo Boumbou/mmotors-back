@@ -21,6 +21,8 @@ using mmotors_back.Features.Applications.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using mmotors_back.Features.Shared.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 
 namespace mmotors_back.Tests.Features.Applications
@@ -166,7 +168,15 @@ namespace mmotors_back.Tests.Features.Applications
                     .Options;
 
                 await using var context = new AppDbContext(options);
-                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+
+                //add vehicle and user to satisfy foreign key constraints
+                context.Vehicles.Add(new Vehicle { Id = 1, Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE });
+                await context.SaveChangesAsync();
+                string userGuid = Guid.NewGuid().ToString();
+                context.Users.Add(new User { Id = userGuid, UserName = "testuser" });
+                await context.SaveChangesAsync();
+
+                var application = new Application { UserId = userGuid, VehicleId = 1, Status = ApplicationStatus.DRAFT };
                 context.Applications.Add(application);
                 await context.SaveChangesAsync();
                 var repository = new ApplicationRepository(context,_paginationServiceMock.Object);
@@ -214,9 +224,17 @@ namespace mmotors_back.Tests.Features.Applications
 
                 await using var context = new AppDbContext(options);
 
+                //add vehicle and user to satisfy foreign key constraints
+                context.Vehicles.Add(new Vehicle { Id = 1, Brand = "Toyota", Model = "Corolla", Year = 2020, ListingType = ListingType.SALE, Status = VehicleStatus.AVAILABLE });
+                context.Vehicles.Add(new Vehicle { Id = 2, Brand = "Honda", Model = "Civic", Year = 2021, ListingType = ListingType.RENTAL, Status = VehicleStatus.AVAILABLE });
+                await context.SaveChangesAsync();
+                string userGuid = Guid.NewGuid().ToString();
+                context.Users.Add(new User { Id = userGuid, UserName = "testuser" });
+                await context.SaveChangesAsync();
 
-                context.Applications.Add(new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT });
-                context.Applications.Add(new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 2, Status = ApplicationStatus.DRAFT });
+
+                context.Applications.Add(new Application { UserId = userGuid, VehicleId = 1, Status = ApplicationStatus.DRAFT });
+                context.Applications.Add(new Application { UserId = userGuid, VehicleId = 2, Status = ApplicationStatus.DRAFT });
                 await context.SaveChangesAsync();
 
                 
@@ -262,13 +280,19 @@ namespace mmotors_back.Tests.Features.Applications
                     .Options;
 
                 await using var context = new AppDbContext(options);
-                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
                 context.Applications.Add(application);
                 await context.SaveChangesAsync();
                 var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
 
+                var userClaims = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                }, "mock"));
+
                 // Act
-                await repository.DeleteApplicationAsync(application.Id);
+                await repository.DeleteApplicationAsync(application.Id, userClaims);
 
                 // Assert
                 var deletedApplication = await context.Applications.FindAsync(application.Id);
@@ -286,11 +310,76 @@ namespace mmotors_back.Tests.Features.Applications
 
                 await using var context = new AppDbContext(options);
                 var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+   
+                var userClaims = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                }, "mock"));
 
                 // Act & Assert
                 await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
                 {
-                    await repository.DeleteApplicationAsync(999); // Assuming 999 is an ID that does not exist
+                    await repository.DeleteApplicationAsync(999, userClaims); // Assuming 999 is an ID that does not exist
+                });
+            }
+
+            //test a staff cannot delete application in draft status
+            [Fact]
+            public async Task DeleteApplicationAsync_ShouldThrowInvalidOperationException_WhenStaffTriesToDeleteDraftApplication()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.DRAFT };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+
+                var userClaims = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Staff")
+                }, "mock"));
+
+
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                // Act & Assert
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                {
+                    await repository.DeleteApplicationAsync(application.Id, userClaims); // Assuming staff tries to delete a draft application
+                });
+            }
+
+            //test customer cannot delete application other than draft status
+            [Fact]
+            public async Task DeleteApplicationAsync_ShouldThrowInvalidOperationException_WhenCustomerTriesToDeleteNonDraftApplication()
+            {
+                // Arrange
+                var options = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                    .Options;
+
+                await using var context = new AppDbContext(options);
+                var application = new Application { UserId = Guid.NewGuid().ToString(), VehicleId = 1, Status = ApplicationStatus.SUBMITTED };
+                context.Applications.Add(application);
+                await context.SaveChangesAsync();
+
+                var userClaims = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Customer")
+                }, "mock"));
+
+                var repository = new ApplicationRepository(context, _paginationServiceMock.Object);
+
+                // Act & Assert
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                {
+                    await repository.DeleteApplicationAsync(application.Id, userClaims); // Assuming customer tries to delete a non-draft application
                 });
             }
         #endregion

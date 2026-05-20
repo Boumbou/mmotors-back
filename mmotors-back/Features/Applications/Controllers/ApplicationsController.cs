@@ -99,7 +99,7 @@ namespace mmotors_back.Features.Applications.Controllers
             return Ok(applications);
         }
 
-        [HttpPost("{id}/delete")]
+        [HttpDelete("{id}")]
         [Authorize(Policy = "RequireAuthenticatedUser")]
         public async Task<IActionResult> DeleteApplication(int id)
         {
@@ -121,11 +121,14 @@ namespace mmotors_back.Features.Applications.Controllers
 
             try
             {
-                await _applicationsRepository.DeleteApplicationAsync(id);
+                await _applicationsRepository.DeleteApplicationAsync(id, User);
                 return NoContent();
             }catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }catch(InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
             }catch(Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
