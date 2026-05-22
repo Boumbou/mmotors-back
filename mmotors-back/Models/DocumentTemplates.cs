@@ -20,7 +20,7 @@ namespace mmotors_back.Models
     }
     public enum DocumentType
     {
-        VEHICLE_PHOTO, // for the listing
+        // VEHICLE_PHOTO, // for the listing
         COMMON_APPLICATION, // required for any application
         SALES_APPLICATION, // required for sales applications
         RENTAL_APPLICATION // required for rental applications

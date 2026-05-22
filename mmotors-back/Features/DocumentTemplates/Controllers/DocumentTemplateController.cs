@@ -10,7 +10,9 @@
     * - DeleteDocumentTemplateAsync: to delete a document template by its id
 */
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using mmotors_back.Features.DocumentTemplates.Dtos;
 using mmotors_back.Features.DocumentTemplates.Interfaces;
 using mmotors_back.Models;
 
@@ -18,6 +20,7 @@ namespace mmotors_back.Features.DocumentTemplates.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Policy = "RequireAdminRole")]
     public class DocumentTemplateController : ControllerBase
     {
         private readonly IDocumentTemplateRepository _repository;
@@ -27,6 +30,7 @@ namespace mmotors_back.Features.DocumentTemplates.Controllers
             _repository = repository;
         }
 
+        // GET: api/DocumentTemplate
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DocumentTemplate>>> GetAllDocumentTemplatesAsync()
         {
@@ -34,6 +38,7 @@ namespace mmotors_back.Features.DocumentTemplates.Controllers
             return Ok(templates);
         }
 
+        // GET: api/DocumentTemplate/5
         [HttpGet("{id}")]
         public async Task<ActionResult<DocumentTemplate>> GetDocumentTemplateByIdAsync(int id)
         {
@@ -45,15 +50,24 @@ namespace mmotors_back.Features.DocumentTemplates.Controllers
             return Ok(template);
         }
 
+        // POST: api/DocumentTemplate
         [HttpPost]
-        public async Task<ActionResult<DocumentTemplate>> CreateDocumentTemplateAsync(DocumentTemplate template)
-        {
-            var createdTemplate = await _repository.CreateDocumentTemplateAsync(template);
-            return CreatedAtAction(nameof(GetDocumentTemplateByIdAsync), new { id = createdTemplate.Id }, createdTemplate);
+        public async Task<ActionResult<DocumentTemplate>> CreateDocumentTemplateAsync([FromBody] DocumentTemplateDto template)
+        {   
+            try
+            {
+                var createdTemplate = await _repository.CreateDocumentTemplateAsync(template);
+                return CreatedAtAction("GetDocumentTemplateById", new { id = createdTemplate.Id }, createdTemplate);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
+        // PUT: api/DocumentTemplate/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateDocumentTemplateAsync(int id, DocumentTemplate template)
+        public async Task<IActionResult> UpdateDocumentTemplateAsync(int id, DocumentTemplateDto template)
         {
             if (id != template.Id)
             {
@@ -68,6 +82,7 @@ namespace mmotors_back.Features.DocumentTemplates.Controllers
             return NoContent();
         }
 
+        // DELETE: api/DocumentTemplate/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDocumentTemplateAsync(int id)
         {
