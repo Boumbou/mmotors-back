@@ -57,8 +57,8 @@ namespace mmotors_back.Features.Vehicles.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Staff")]
-        public async Task<IActionResult> AddVehicle([FromBody] CreateVehicleDto vehicle, [FromBody] IFormFile? image)
+        [Authorize(policy: "RequireStaffOrAdminRole")]
+        public async Task<IActionResult> AddVehicle([FromForm] CreateVehicleDto vehicle, [FromForm] IFormFile? image)
         {
             if (!ModelState.IsValid)
             {
@@ -67,7 +67,7 @@ namespace mmotors_back.Features.Vehicles.Controllers
 
             if (image != null)
             {
-                var uploadResult = await _storageService.UploadFileAsync(image);
+                var uploadResult = await _storageService.UploadFileAsync(image, "01_vehicules");
                 vehicle.ImageUrl = uploadResult.Url;
                 vehicle.ImageKey = uploadResult.Key;
             }
@@ -78,8 +78,9 @@ namespace mmotors_back.Features.Vehicles.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Staff")]
-        public async Task<IActionResult> UpdateVehicle(int id, [FromBody] VehicleDto vehicle)
+        [Authorize(policy: "RequireStaffOrAdminRole")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateVehicle(int id, [FromForm] VehicleDto vehicle, [FromForm] IFormFile? image)
         {
             if (!ModelState.IsValid)
             {
@@ -89,14 +90,31 @@ namespace mmotors_back.Features.Vehicles.Controllers
             {
                 return BadRequest("Vehicle ID mismatch");
             }
+
+            if(vehicle.ImageKey != null && image != null)
+            {
+                await _storageService.DeleteFileAsync(vehicle.ImageKey, "01_vehicules");
+            }
+
+            if (image != null)
+            {
+                var uploadResult = await _storageService.UploadFileAsync(image, "01_vehicules");
+                vehicle.ImageUrl = uploadResult.Url;
+                vehicle.ImageKey = uploadResult.Key;
+            }
             await _vehiclesRepository.UpdateVehicleAsync(vehicle, User);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(policy: "RequireStaffOrAdminRole")]
         public async Task<IActionResult> DeleteVehicle(int id)
         {
+            var vehicle = await _vehiclesRepository.GetVehicleByIdAsync(id);
+            if (vehicle.ImageKey != null)
+            {
+                await _storageService.DeleteFileAsync(vehicle.ImageKey, "01_vehicules");
+            }
             await _vehiclesRepository.DeleteVehicleAsync(id, User);
             return NoContent();
         }

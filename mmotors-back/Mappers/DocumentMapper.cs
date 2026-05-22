@@ -20,6 +20,7 @@ namespace mmotors_back.Mappers
                 MimeType = document.MimeType,
                 Extension = document.Extension,
                 Url = document.Url,
+                Key = document.Key,
                 UploadedAt = document.UploadedAt
             };
         }

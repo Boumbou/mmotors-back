@@ -44,9 +44,9 @@ namespace mmotors_back.Features.Shared.Services
             return (Url: filePath, Key: key);
         }
 
-        public Task DeleteFileAsync(string key)
+        public Task DeleteFileAsync(string key, string subfolder = "")
         {
-            string filePath = Path.Combine(_storagePath, key);
+             string filePath = Path.Combine(_storagePath, subfolder, key);
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
@@ -54,9 +54,9 @@ namespace mmotors_back.Features.Shared.Services
             return Task.CompletedTask;
         }
 
-        public Task<Stream> GetFileAsync(string key)
+        public Task<Stream> GetFileAsync(string key, string subfolder = "")
         {
-            string filePath = Path.Combine(_storagePath, key);
+            string filePath = Path.Combine(_storagePath, subfolder, key);
             if (File.Exists(filePath))
             {
                 Stream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -64,5 +64,6 @@ namespace mmotors_back.Features.Shared.Services
             }
             throw new FileNotFoundException($"File with key {key} not found.");
         }
-    }
+    }   
 }
+       
