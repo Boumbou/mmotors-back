@@ -18,6 +18,8 @@ using mmotors_back.Features.Services.Interfaces;
 using mmotors_back.Features.Services.Repositories;
 using mmotors_back.Features.Shared.Interfaces;
 using mmotors_back.Features.Shared.Services;
+using mmotors_back.Features.Documents.Interfaces;
+using mmotors_back.Features.Documents.Repositories;
 
 
 //create builder instance
@@ -151,6 +153,7 @@ var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddScoped<IVehiclesRepository, VehiclesRepository>();
     builder.Services.AddScoped<IApplicationsRepository, ApplicationRepository>();
     builder.Services.AddScoped<IServicesRepository, ServicesRepository>();
+    builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
     //add services
     builder.Services.AddScoped<CheckAuthorization>();

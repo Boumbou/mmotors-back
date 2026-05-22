@@ -41,7 +41,7 @@ namespace mmotors_back.Features.Services.Controllers
         // GET: api/services/{id}
         [HttpGet("{id}")]
         [Authorize("RequireAdminRole")]
-        public async Task<ActionResult<ServiceDto>> GetService(int id)
+        public async Task<ActionResult<ServiceDto>> GetServiceById(int id)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace mmotors_back.Features.Services.Controllers
         public async Task<ActionResult<ServiceDto>> CreateService(CreateServiceDto service)
         {
             var createdService = await _servicesRepository.CreateServiceAsync(service);
-            return CreatedAtAction(nameof(GetService), new { id = createdService.Id }, createdService);
+            return CreatedAtAction(nameof(GetServiceById), new { id = createdService.Id }, createdService);
         }
 
         // PUT: api/services/{id}
@@ -70,6 +70,10 @@ namespace mmotors_back.Features.Services.Controllers
         [Authorize("RequireAdminRole")]
         public async Task<IActionResult> UpdateService(int id, ServiceDto service)
         {
+            //check dto validation
+            if (!ModelState.IsValid)            {
+                return BadRequest(ModelState);
+            }
             if (id != service.Id)
             {
                 return BadRequest();

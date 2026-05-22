@@ -19,6 +19,7 @@ namespace mmotors_back.Features.Documents.Dtos
         public string? MimeType { get; set; }
         public string? Extension { get; set; }
         public string? Url { get; set; }
+        public string? Key { get; set; }
         public int? ApplicationId { get; set; }
         public DateTime? UploadedAt { get; set; }
         public int? VehicleId { get; set; }
@@ -38,6 +39,7 @@ namespace mmotors_back.Features.Documents.Dtos
         public int Id { get; set; }
         public required string FileName { get; set; }
         public string? Url { get; set; }
+        public string? Key { get; set; }
         public string? MimeType { get; set; }
         public string? Extension { get; set; }
         

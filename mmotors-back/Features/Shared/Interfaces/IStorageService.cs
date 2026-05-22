@@ -14,7 +14,7 @@ namespace mmotors_back.Features.Shared.Interfaces
     public interface IStorageService
     {
         Task<(string Url, string Key)> UploadFileAsync(IFormFile file, string subfolder = "");
-        Task DeleteFileAsync(string key);
-        Task<Stream> GetFileAsync(string key);
+        Task DeleteFileAsync(string key, string subfolder = "");
+        Task<Stream> GetFileAsync(string key, string subfolder = "");
     }
 }

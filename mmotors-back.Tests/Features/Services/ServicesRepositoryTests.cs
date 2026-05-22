@@ -117,16 +117,15 @@ namespace mmotors_back.Tests.Features.Services
                 Assert.Equal(createdService.IsActive, result.IsActive);
             }
 
-            //test GetServiceByIdAsync_ShouldReturnNull_WhenServiceDoesNotExist
+            //test GetServiceByIdAsync_ShouldThrowException_WhenServiceDoesNotExist
             [Fact]
-            public async Task GetServiceByIdAsync_ShouldReturnNull_WhenServiceDoesNotExist()
+            public async Task GetServiceByIdAsync_ShouldThrowException_WhenServiceDoesNotExist()
             {
-                // Act
-                var result = await _servicesRepository.GetServiceByIdAsync(999);
-
-                // Assert
-                Assert.Null(result);
-
+                // Act & Assert
+                await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+                {
+                    await _servicesRepository.GetServiceByIdAsync(999);
+                });
             }
         #endregion
 
@@ -207,8 +206,10 @@ namespace mmotors_back.Tests.Features.Services
 
                 // Assert
                 Assert.Equal(1, result);
-                var deletedService = await _servicesRepository.GetServiceByIdAsync(service.Id);
-                Assert.Null(deletedService);
+                await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+                {
+                    await _servicesRepository.GetServiceByIdAsync(service.Id);
+                });
             }
 
             //test DeleteServiceAsync_ShouldReturnZero_WhenServiceDoesNotExist

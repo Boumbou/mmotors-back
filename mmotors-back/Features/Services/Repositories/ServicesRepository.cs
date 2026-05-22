@@ -43,7 +43,7 @@ namespace mmotors_back.Features.Services.Repositories
             var service = await _context.Services.FindAsync(id);
             if (service == null)
             {
-                throw new Exception("Service not found");
+                throw new KeyNotFoundException("Service not found");
             }   
             return ServiceMapper.ToDto(service);
 
