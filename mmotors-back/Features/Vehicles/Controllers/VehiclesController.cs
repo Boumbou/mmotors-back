@@ -38,6 +38,16 @@ namespace mmotors_back.Features.Vehicles.Controllers
             
             PaginationParams queryPaginationParams = paginationParams ?? new PaginationParams();
             var vehicles = await _vehiclesRepository.GetAllVehiclesAsync(type, queryPaginationParams);
+            if (vehicles.Items != null)
+            {
+                foreach (var vehicle in vehicles.Items)
+                {
+                    if (!string.IsNullOrEmpty(vehicle.ImageKey))
+                    {
+                        vehicle.ImageUrl = _storageService.GetFileUrl(vehicle.ImageKey, "01_vehicules");
+                    }
+                }
+            }
             return Ok(vehicles);
         }
 
@@ -48,6 +58,10 @@ namespace mmotors_back.Features.Vehicles.Controllers
             try
             {
                 var vehicle = await _vehiclesRepository.GetVehicleByIdAsync(id);
+                if (!string.IsNullOrEmpty(vehicle.ImageKey))
+                {
+                    vehicle.ImageUrl = _storageService.GetFileUrl(vehicle.ImageKey, "01_vehicules");
+                }
                 return Ok(vehicle);
             }catch (KeyNotFoundException)
             {
@@ -111,10 +125,12 @@ namespace mmotors_back.Features.Vehicles.Controllers
         public async Task<IActionResult> DeleteVehicle(int id)
         {
             var vehicle = await _vehiclesRepository.GetVehicleByIdAsync(id);
+
             if (vehicle.ImageKey != null)
             {
                 await _storageService.DeleteFileAsync(vehicle.ImageKey, "01_vehicules");
             }
+
             await _vehiclesRepository.DeleteVehicleAsync(id, User);
             return NoContent();
         }

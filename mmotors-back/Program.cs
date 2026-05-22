@@ -22,6 +22,9 @@ using mmotors_back.Features.Documents.Interfaces;
 using mmotors_back.Features.Documents.Repositories;
 using mmotors_back.Features.DocumentTemplates.Interfaces;
 using mmotors_back.Features.DocumentTemplates.Repositories;
+using Amazon.S3;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.Runtime;
 
 
 //create builder instance
@@ -168,11 +171,20 @@ var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddScoped<DataSeeder>();
 
     //add storage service
-    builder.Services.AddScoped<IStorageService, LocalStorageService>(provider =>
+    var storageType = builder.Configuration["Storage:Type"];
+    if (storageType == "S3")
     {
-        var storagePath = Path.Combine("wwwroot", "uploads");
-        return new LocalStorageService(storagePath);
-    });
+        builder.Services.AddAWSService<IAmazonS3>();
+        builder.Services.AddScoped<IStorageService, S3FileStorageService>();
+    }
+    else
+    {
+        builder.Services.AddScoped<IStorageService, LocalStorageService>(provider =>
+        {
+            var storagePath = builder.Configuration["Storage:Local:StoragePath"]??"wwwroot/uploads";
+            return new LocalStorageService(storagePath);
+        });
+    }
 #endregion
 
 #region Build App and Configure Middleware

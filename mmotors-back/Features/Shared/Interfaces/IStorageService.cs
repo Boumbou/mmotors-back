@@ -16,5 +16,6 @@ namespace mmotors_back.Features.Shared.Interfaces
         Task<(string Url, string Key)> UploadFileAsync(IFormFile file, string subfolder = "");
         Task DeleteFileAsync(string key, string subfolder = "");
         Task<Stream> GetFileAsync(string key, string subfolder = "");
+        string GetFileUrl(string key, string subfolder = "");
     }
 }
