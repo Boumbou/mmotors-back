@@ -9,6 +9,7 @@
     * - UpdateDocumentTemplateAsync: to update an existing document template
     * - DeleteDocumentTemplateAsync: to delete a document template by its id
 */
+using mmotors_back.Features.DocumentTemplates.Dtos;
 using mmotors_back.Models;
 
 namespace mmotors_back.Features.DocumentTemplates.Interfaces
@@ -17,8 +18,8 @@ namespace mmotors_back.Features.DocumentTemplates.Interfaces
     {
         Task<IEnumerable<DocumentTemplate>> GetAllDocumentTemplatesAsync();
         Task<DocumentTemplate> GetDocumentTemplateByIdAsync(int id);
-        Task<DocumentTemplate> CreateDocumentTemplateAsync(DocumentTemplate template);
-        Task<bool> UpdateDocumentTemplateAsync(DocumentTemplate template);
+        Task<DocumentTemplate> CreateDocumentTemplateAsync(DocumentTemplateDto template);
+        Task<bool> UpdateDocumentTemplateAsync(DocumentTemplateDto template);
         Task<bool> DeleteDocumentTemplateAsync(int id);
     }
 }

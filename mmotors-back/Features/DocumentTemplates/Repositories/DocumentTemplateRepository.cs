@@ -10,6 +10,7 @@ using mmotors_back.Data;
 using mmotors_back.Features.DocumentTemplates.Interfaces;
 using mmotors_back.Models;
 using Microsoft.EntityFrameworkCore;
+using mmotors_back.Features.DocumentTemplates.Dtos;
 
 namespace mmotors_back.Features.DocumentTemplates.Repositories
 {
@@ -37,14 +38,23 @@ namespace mmotors_back.Features.DocumentTemplates.Repositories
             return template;
         }
 
-        public async Task<DocumentTemplate> CreateDocumentTemplateAsync(DocumentTemplate template)
+        public async Task<DocumentTemplate> CreateDocumentTemplateAsync(DocumentTemplateDto template)
         {
-            _context.DocumentTemplates.Add(template);
+            var newTemplate = new DocumentTemplate
+            {
+                Name = template.Name,
+                Type = template.Type,
+                IsActive = template.IsActive,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _context.DocumentTemplates.AddAsync(newTemplate);
             await _context.SaveChangesAsync();
-            return template;
+            return newTemplate;
         }
 
-        public async Task<bool> UpdateDocumentTemplateAsync(DocumentTemplate template)
+        public async Task<bool> UpdateDocumentTemplateAsync(DocumentTemplateDto template)
         {
             var existingTemplate = await _context.DocumentTemplates.FindAsync(template.Id);
             if (existingTemplate == null)

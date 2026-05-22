@@ -125,30 +125,24 @@ public class DataSeeder
             new DocumentTemplate
             {
                 Id = 1,
-                Name = "Photo du véhicule",
-                Type = DocumentType.VEHICLE_PHOTO
-            },
-            new DocumentTemplate
-            {
-                Id = 2,
                 Name = "Justificatif d'identité",
                 Type = DocumentType.COMMON_APPLICATION
             },
             new DocumentTemplate
             {
-                Id = 3,
+                Id = 2,
                 Name = "Justificatif de domicile",
                 Type = DocumentType.COMMON_APPLICATION
             },
             new DocumentTemplate
             {
-                Id = 4,
+                Id = 3,
                 Name = "RIB",
                 Type = DocumentType.RENTAL_APPLICATION
             },
             new DocumentTemplate
             {
-                Id = 5,
+                Id = 4,
                 Name = "Permis de conduire",
                 Type = DocumentType.RENTAL_APPLICATION
             }
