@@ -521,3 +521,7 @@ publish/
 # OS files
 .DS_Store
 Thumbs.db
+
+#local storage
+wwwroot
+wwwroot/*
