@@ -64,6 +64,16 @@ namespace mmotors_back.Features.Shared.Services
             }
             throw new FileNotFoundException($"File with key {key} not found.");
         }
+
+        public string GetFileUrl(string key, string subfolder = "")
+        {
+            string filePath = Path.Combine(_storagePath, subfolder, key);
+            if (File.Exists(filePath))
+            {
+                return filePath;
+            }
+            throw new FileNotFoundException($"File with key {key} not found.");
+        }
     }   
 }
        
