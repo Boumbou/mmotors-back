@@ -525,3 +525,6 @@ Thumbs.db
 #local storage
 wwwroot
 wwwroot/*
+
+appsettings.json
+appsettings.*.json
