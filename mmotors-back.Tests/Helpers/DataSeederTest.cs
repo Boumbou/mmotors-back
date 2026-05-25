@@ -60,7 +60,7 @@ public class DataSeederTest
 
 
         // Act
-        await _dataSeeder.SeedData(adminUser, "adminPassword");
+        await _dataSeeder.SeedData(adminUser, "adminPassword", "Admin");
 
         // Assert
         userManagerMock.Verify(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Once);
@@ -92,7 +92,7 @@ public class DataSeederTest
             .ReturnsAsync(true);
 
         //Act
-        await _dataSeeder.SeedData(adminUser, "adminPassword");
+        await _dataSeeder.SeedData(adminUser, "adminPassword", "Admin");
 
         //Assert
         userManagerMock.Verify(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
@@ -119,7 +119,7 @@ public class DataSeederTest
             .ReturnsAsync(false);
 
         //Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _dataSeeder.SeedData(adminUser, "adminPassword"));
+        await Assert.ThrowsAsync<Exception>(() => _dataSeeder.SeedData(adminUser, "adminPassword", "Admin"));
 
         //Asset
         userManagerMock.Verify(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
