@@ -13,6 +13,7 @@ namespace mmotors_back.Features.Shared.Services
     public class LocalStorageService : IStorageService
     {
         private readonly string _storagePath;
+        private readonly string _apiBaseUrl = "http://localhost:5049"; // Base URL for accessing files
 
         public LocalStorageService(string storagePath)
         {
@@ -70,7 +71,7 @@ namespace mmotors_back.Features.Shared.Services
             string filePath = Path.Combine(_storagePath, subfolder, key);
             if (File.Exists(filePath))
             {
-                return filePath;
+                return Path.Combine(_apiBaseUrl, "uploads", subfolder, key).Replace("\\", "/");
             }
             throw new FileNotFoundException($"File with key {key} not found.");
         }

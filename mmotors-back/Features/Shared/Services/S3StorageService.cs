@@ -10,20 +10,25 @@ namespace mmotors_back.Features.Shared.Services
     {
         private readonly IAmazonS3 _s3;
         private readonly IConfiguration _config;
+        private readonly string _bucket;
 
         public S3FileStorageService(IAmazonS3 s3, IConfiguration config)
         {
             _s3 = s3;
             _config = config;
+            _bucket = _config["Storage:S3:BucketName"]?? 
+                throw new InvalidOperationException(
+                    "Storage:S3:BucketName est introuvable."
+                );
+
         }
 
         public async Task DeleteFileAsync(string key, string subfolder = "")
         {
-            var bucket = _config["Storage:S3:S3BucketName"];
 
             var request = new DeleteObjectRequest
             {
-                BucketName = bucket,
+                BucketName = _bucket,
                 Key = key
             };
 
@@ -32,7 +37,6 @@ namespace mmotors_back.Features.Shared.Services
 
         public async Task<(string Url, string Key)> UploadFileAsync(IFormFile file, string subfolder = "")
         {
-            var bucket = _config["Storage:S3:S3BucketName"];
             var key = string.IsNullOrEmpty(subfolder)
                 ? $"documents/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}"
                 : $"{subfolder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
@@ -41,26 +45,28 @@ namespace mmotors_back.Features.Shared.Services
 
             var request = new PutObjectRequest
             {
-                BucketName = bucket,
+                BucketName = _bucket,
                 Key = key,
                 InputStream = stream,
                 ContentType = file.ContentType
             };
 
+            Console.WriteLine("S3 upload started");
+
             await _s3.PutObjectAsync(request);
 
-            var url = $"https://{bucket}.s3.amazonaws.com/{key}";
+            Console.WriteLine("S3 upload completed");
+            
+            var url = $"https://{_bucket}.s3.amazonaws.com/{key}";
 
             return (url, key);
         }
 
         public async Task<Stream> GetFileAsync(string key, string subfolder = "")
         {
-            var bucket = _config["Storage:S3:S3BucketName"];
-
             var request = new GetObjectRequest
             {
-                BucketName = bucket,
+                BucketName = _bucket,
                 Key = key
             };
 
@@ -70,11 +76,10 @@ namespace mmotors_back.Features.Shared.Services
 
         public string GetFileUrl(string key, string subfolder = "")
         {
-            var bucket = _config["Storage:S3:S3BucketName"];
 
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = bucket,
+                BucketName = _bucket,
                 Key = key,
                 Expires = DateTime.UtcNow.AddMinutes(15)
             };

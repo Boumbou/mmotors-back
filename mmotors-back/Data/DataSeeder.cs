@@ -20,12 +20,12 @@ public class DataSeeder
         _roleManager = roleManager;
     }
 
-    public  async Task SeedData(User adminUser, string adminPassword)
+    public  async Task SeedData(User adminUser, string adminPassword, string roleName)
     {
         //check if role exists, if not throw an exception
-        if (!await _roleManager.RoleExistsAsync("Admin"))
+        if (!await _roleManager.RoleExistsAsync(roleName))
         {
-            throw new Exception("Admin role does not exist");
+            throw new Exception($"{roleName} role does not exist");
         }
         if(adminUser.Email == null || string.IsNullOrEmpty(adminPassword))
         {
@@ -35,7 +35,7 @@ public class DataSeeder
         User? existingAdminUser = await _userManager.FindByEmailAsync(adminUser.Email);
 
         if (existingAdminUser != null)        {
-            if (await _userManager.IsInRoleAsync(existingAdminUser, "Admin"))
+            if (await _userManager.IsInRoleAsync(existingAdminUser, roleName))
             {
                 return;
             }
@@ -47,9 +47,9 @@ public class DataSeeder
         {
             throw new Exception("Failed to create admin user");
         }
-        if(!(await _userManager.AddToRoleAsync(adminUser, "Admin")).Succeeded)
+        if(!(await _userManager.AddToRoleAsync(adminUser, roleName)).Succeeded)
         {
-            throw new Exception("Failed to add admin user to role");
+            throw new Exception($"Failed to add admin user to {roleName} role");
         }
 
         return ;

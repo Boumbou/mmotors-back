@@ -245,13 +245,24 @@ var builder = WebApplication.CreateBuilder(args);
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
         var dataSeeder = new DataSeeder(userManager, roleManager);
+        
+        //seed admin user with email
         await dataSeeder.SeedData(new User
         {
             Name = "Admin",
             LastName = "User",
             UserName = "admin@example.com",
             Email = "admin@example.com"
-        }, "adminPassword1");
+        }, "adminPassword1", "Admin");
+
+        //seed staff user with email
+        await dataSeeder.SeedData(new User
+        {
+            Name = "Staff",
+            LastName = "User",
+            UserName = "staff@example.com",
+            Email = "staff@example.com"
+        }, "staffPassword1", "Staff");
 
         await dataSeeder.SeedVehicles(services.GetRequiredService<AppDbContext>());
         await dataSeeder.SeedDocumentTemplates(services.GetRequiredService<AppDbContext>());

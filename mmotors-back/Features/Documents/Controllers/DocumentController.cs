@@ -29,16 +29,20 @@ namespace mmotors_back.Features.Documents.Controllers
             _documentRepository = documentRepository;
         }
 
-        // POST: api/document/upload
+        // POST: api/documents/upload
         [HttpPost("upload")]
         [Authorize(policy:"RequireAuthenticatedUser")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadDocument([FromForm] int id,[FromForm] IFormFile? document)
         {
+            Console.WriteLine("UPLOAD ACTION HIT");
+
             if (document == null || document.Length == 0)
             {
                 return BadRequest("No document uploaded.");
             }
 
+            Console.WriteLine("UPLOAD ACTION CONTINUED");
             //check if file exists for this document id
             var existingDocument = await _documentRepository.GetDocumentByIdAsync(id);
 
@@ -48,6 +52,7 @@ namespace mmotors_back.Features.Documents.Controllers
                 await _storageService.DeleteFileAsync(existingDocument.Key, "01_applications");
             }
 
+            Console.WriteLine("FILE DELETED IF EXISTS");
             var result = await _storageService.UploadFileAsync(document, "01_applications");
             
             //update the document with the new file information
@@ -61,9 +66,9 @@ namespace mmotors_back.Features.Documents.Controllers
         }
 
         // GET: api/document/download/{key}
-        [HttpGet("download/{key}")]
+        [HttpGet("download")]
         [Authorize(policy:"RequireAuthenticatedUser")]
-        public async Task<IActionResult> DownloadDocument(string key)
+        public async Task<IActionResult> DownloadDocument([FromQuery] string key)
         {
             var stream = await _storageService.GetFileAsync(key, "01_applications");
             if (stream == null)

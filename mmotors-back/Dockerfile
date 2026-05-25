@@ -8,10 +8,10 @@ USER app
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG configuration=Release
 WORKDIR /src
-COPY ["mmotors-backend/mmotors-back/mmotors-back.csproj", "mmotors-backend/mmotors-back/"]
-RUN dotnet restore "mmotors-backend/mmotors-back/mmotors-back.csproj"
+COPY ["mmotors-back.csproj", "."]
+RUN dotnet restore "mmotors-back.csproj"
 COPY . .
-WORKDIR "/src/mmotors-backend/mmotors-back"
+WORKDIR "/src"
 RUN dotnet build "mmotors-back.csproj" -c $configuration -o /app/build
 
 FROM build AS publish

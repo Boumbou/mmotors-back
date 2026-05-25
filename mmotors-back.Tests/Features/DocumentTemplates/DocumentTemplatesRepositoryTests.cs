@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using mmotors_back.Data;
 using mmotors_back.Features.DocumentTemplates.Repositories;
 using mmotors_back.Models;
+using mmotors_back.Features.DocumentTemplates.Dtos;
 
 namespace mmotors_back.Tests.Features.DocumentTemplates
 {
@@ -69,7 +70,7 @@ namespace mmotors_back.Tests.Features.DocumentTemplates
 			await context.SaveChangesAsync();
 
 			var repository = new DocumentTemplateRepository(context);
-			var updatedTemplate = new DocumentTemplate
+			var updatedTemplate = new DocumentTemplateDto
 			{
 				Id = 1,
 				Name = "Updated Template",
