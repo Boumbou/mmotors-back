@@ -526,5 +526,7 @@ Thumbs.db
 wwwroot
 wwwroot/*
 
+*/appsettings.json
 appsettings.json
 appsettings.*.json
+mmotors-back/appsettings.json
