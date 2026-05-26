@@ -18,16 +18,14 @@ namespace mmotors_back.Features.Accounts.Services
         // - Managing token expiration and revocation
         private readonly IConfiguration _config; // holds configuration properties
         private readonly SymmetricSecurityKey _key;
-        private readonly UserManager<User> _userManager;
 
-        public TokenService(IConfiguration config, UserManager<User> userManager)
+        public TokenService(IConfiguration config)
         {
             _config = config;
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SigningKey"]!));
-            _userManager = userManager;
         }
 
-        public string GenerateToken(User user)
+        public string GenerateToken(User user, IEnumerable<string> roles)
         {
 
             //method to invoke to generate token
@@ -36,7 +34,6 @@ namespace mmotors_back.Features.Accounts.Services
             if (user == null) throw new ArgumentNullException("user");
 
             //get user roles
-            var userRole = _userManager.GetRolesAsync(user).Result;
             //create claims
             var claims = new List<Claim>
             {
@@ -55,7 +52,7 @@ namespace mmotors_back.Features.Accounts.Services
 
             };
             //add roles to claims
-            foreach (var role in userRole)
+            foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }

@@ -4,7 +4,10 @@ using mmotors_back.Features.Accounts.Dtos;
 using mmotors_back.Features.Accounts.Services;
 using mmotors_back.Features.Accounts.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Moq;
+using Microsoft.Extensions.Hosting;
 
 namespace mmotors_back.Tests.Features.Accounts;
 
@@ -21,7 +24,7 @@ public class AuthServiceTests
     {
         return new Mock<SignInManager<User>>(
             userManagerMock.Object,
-            Mock.Of<Microsoft.AspNetCore.Http.IHttpContextAccessor>(),
+            Mock.Of<IHttpContextAccessor>(),
             Mock.Of<IUserClaimsPrincipalFactory<User>>(),
             null!, null!, null!, null!);
     }
@@ -31,6 +34,17 @@ public class AuthServiceTests
         return new Mock<ITokenService>();
     }
 
+    private Mock<IHttpContextAccessor> GetHttpContextAccessorMock()
+    {
+        return new Mock<IHttpContextAccessor>();
+    }
+
+    private Mock<IWebHostEnvironment> GetWebHostEnvironmentMock()
+    {
+        var envMock = new Mock<IWebHostEnvironment>();
+        envMock.Setup(env => env.EnvironmentName).Returns("Production"); // Adjust as needed for testing
+        return envMock;
+    }
 
     //verify registration logic with valid data
     [Fact]
@@ -38,19 +52,21 @@ public class AuthServiceTests
     {
         // Arrange
         var userManagerMock = GetUserManagerMock();
+        userManagerMock.Setup(um => um.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+        
+        userManagerMock.Setup(um => um.GetRolesAsync(It.IsAny<User>()))
+            .ReturnsAsync(new List<string> { "Customer" });
 
         userManagerMock.Setup(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Success);
 
         var tokenServiceMock = GetTokenServiceMock();
-        tokenServiceMock.Setup(ts => ts.GenerateToken(It.IsAny<User>())).Returns("mocked_token");
-
-        var signInManagerMock = GetSignInManagerMock(userManagerMock);
-        signInManagerMock.Setup(sm => sm.PasswordSignInAsync(It.IsAny<User>(), It.IsAny<string>(), false, false))
-            .ReturnsAsync(SignInResult.Success);
+        tokenServiceMock.Setup(ts => ts.GenerateToken(It.IsAny<User>(), It.IsAny<IEnumerable<string>>())).Returns("mocked_token");
         
-        
-        var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, tokenServiceMock.Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var registerDto = new RegisterDto
         {
             Name = "Test User",
@@ -64,7 +80,7 @@ public class AuthServiceTests
     
         // Assert
         result.Result.Succeeded.Should().BeTrue();
-        result.Token.Should().NotBeNullOrEmpty();
+        result.Roles.Should().NotBeNullOrEmpty();
         userManagerMock.Verify(um => um.CreateAsync(It.Is<User>(u => u.Email == registerDto.Email), registerDto.Password), Times.Once); 
     }
 
@@ -77,15 +93,17 @@ public class AuthServiceTests
 
         userManagerMock.Setup(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Success);
+        userManagerMock.Setup(um => um.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+        userManagerMock.Setup(um => um.GetRolesAsync(It.IsAny<User>()))
+            .ReturnsAsync(new List<string> { "Customer" });
 
         var tokenServiceMock = GetTokenServiceMock();
-        tokenServiceMock.Setup(ts => ts.GenerateToken(It.IsAny<User>())).Returns("mocked_token");
-
-        var signInManagerMock = GetSignInManagerMock(userManagerMock);
-        signInManagerMock.Setup(sm => sm.PasswordSignInAsync(It.IsAny<User>(), It.IsAny<string>(), false, false))
-            .ReturnsAsync(SignInResult.Success);
+        tokenServiceMock.Setup(ts => ts.GenerateToken(It.IsAny<User>(), It.IsAny<IEnumerable<string>>())).Returns("mocked_token");
         
-        var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, tokenServiceMock.Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var registerDto = new RegisterDto
         {
             Name = "Test User",
@@ -97,7 +115,7 @@ public class AuthServiceTests
         var result = await authService.RegisterUserAsync(registerDto);
         // Assert
         result.Result.Succeeded.Should().BeTrue();
-        result.Token.Should().NotBeNullOrEmpty();
+        result.Roles.Should().NotBeNullOrEmpty();
         result.User.Should().NotBeNull();
         result.User.Email.Should().Be(registerDto.Email);
     }
@@ -114,8 +132,9 @@ public class AuthServiceTests
 
         userManagerMock.Setup(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Email already exists" }));
-
-        var authService = new AuthService(userManagerMock.Object, GetSignInManagerMock(userManagerMock).Object, null!, GetTokenServiceMock().Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, GetTokenServiceMock().Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var registerDto = new RegisterDto
         {
             Name = "Test User",
@@ -142,7 +161,9 @@ public class AuthServiceTests
     {
         // Arrange
         var userManagerMock = GetUserManagerMock();
-        var authService = new AuthService(userManagerMock.Object, GetSignInManagerMock(userManagerMock).Object, null!, GetTokenServiceMock().Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, GetTokenServiceMock().Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var registerDto = new RegisterDto
         {
             Name = "Test User",
@@ -165,7 +186,9 @@ public class AuthServiceTests
     {
         // Arrange
         var userManagerMock = GetUserManagerMock();
-        var authService = new AuthService(userManagerMock.Object, GetSignInManagerMock(userManagerMock).Object, null!, GetTokenServiceMock().Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, GetTokenServiceMock().Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var registerDto = new RegisterDto
         {
             Name = "Test User",
@@ -191,16 +214,17 @@ public class AuthServiceTests
 
         userManagerMock.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync(new User { Email = "test@example.com" });
-
-        var signInManagerMock = GetSignInManagerMock(userManagerMock);
-
-        signInManagerMock.Setup(sm => sm.PasswordSignInAsync(It.IsAny<User>(), It.IsAny<string>(), false, false))
-            .ReturnsAsync(SignInResult.Success);
+        userManagerMock.Setup(um => um.GetRolesAsync(It.IsAny<User>()))
+            .ReturnsAsync(new List<string> { "Customer" });
+        userManagerMock.Setup(um => um.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         var tokenServiceMock = new Mock<ITokenService>();
-        tokenServiceMock.Setup(ts => ts.GenerateToken(It.IsAny<User>())).Returns("mocked_token");
+        tokenServiceMock.Setup(ts => ts.GenerateToken(It.IsAny<User>(), It.IsAny<IEnumerable<string>>())).Returns("mocked_token");
 
-        var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, tokenServiceMock.Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var loginDto = new LoginDto
         {
             Email = "test@example.com",
@@ -212,10 +236,10 @@ public class AuthServiceTests
 
         // Assert
         result.Result.Succeeded.Should().BeTrue();
-        result.Token.Should().NotBeNullOrEmpty();
         result.User.Should().NotBeNull();
+        result.Roles.Should().NotBeEmpty();
         result.User.Email.Should().Be(loginDto.Email);
-        signInManagerMock.Verify(sm => sm.PasswordSignInAsync(It.Is<User>(u => u.Email == loginDto.Email), loginDto.Password, false, false), Times.Once);
+        userManagerMock.Verify(um => um.CheckPasswordAsync(It.Is<User>(u => u.Email == loginDto.Email), loginDto.Password), Times.Once);
     }
 
     //test login fails with invalid credentials
@@ -225,12 +249,15 @@ public class AuthServiceTests
         var userManagerMock = GetUserManagerMock();
         userManagerMock.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync(new User { Email = "test@example.com" });
-        var signInManagerMock = GetSignInManagerMock(userManagerMock);
-        signInManagerMock.Setup(sm => sm.PasswordSignInAsync(It.IsAny<User>(), It.IsAny<string>(), false, false))
-            .ReturnsAsync(SignInResult.Failed);
+
+        userManagerMock.Setup(um => um.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+        
+        
         var tokenServiceMock = new Mock<ITokenService>();
-        var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
-        var loginDto = new LoginDto
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+            var authService = new AuthService(userManagerMock.Object, null!, tokenServiceMock.Object, httpContextAccessorMock.Object, GetWebHostEnvironmentMock().Object);
+            var loginDto = new LoginDto
         {
             Email = "test@example.com",
             Password = "InvalidPassword"
@@ -239,7 +266,7 @@ public class AuthServiceTests
         LoginResultDto result = await authService.LoginUserAsync(loginDto);
         // Assert
         result.Result.Succeeded.Should().BeFalse();
-        signInManagerMock.Verify(sm => sm.PasswordSignInAsync(It.Is<User>(u => u.Email == loginDto.Email), loginDto.Password, false, false), Times.Once);
+        userManagerMock.Verify(um => um.CheckPasswordAsync(It.Is<User>(u => u.Email == loginDto.Email), loginDto.Password), Times.Once);
     }
 
     //test login fails when user does not exist
@@ -251,9 +278,10 @@ public class AuthServiceTests
         userManagerMock.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync((User)null!);
 
-        var signInManagerMock = GetSignInManagerMock(userManagerMock);
 
-        var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, GetTokenServiceMock().Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, GetTokenServiceMock().Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var loginDto = new LoginDto
         {
             Email = "nonexistent@example.com",
@@ -265,7 +293,7 @@ public class AuthServiceTests
 
         // Assert
         result.Result.Succeeded.Should().BeFalse();
-        signInManagerMock.Verify(sm => sm.PasswordSignInAsync(It.IsAny<User>(), loginDto.Password, false, false), Times.Never);
+        userManagerMock.Verify(um => um.CheckPasswordAsync(It.IsAny<User>(), loginDto.Password), Times.Never);
     }
 
     //test successful login should return token
@@ -278,14 +306,10 @@ public class AuthServiceTests
         userManagerMock.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync(new User { Email = "test@example.com" });
 
-        var signInManagerMock = GetSignInManagerMock(userManagerMock);
-
-        signInManagerMock.Setup(sm => sm.PasswordSignInAsync(It.IsAny<User>(), It.IsAny<string>(), false, false))
-            .ReturnsAsync(SignInResult.Failed);
-
         var tokenServiceMock = GetTokenServiceMock();
-
-        var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object, null!, tokenServiceMock.Object);
+        var httpContextAccessorMock = GetHttpContextAccessorMock();
+        var webHostEnvironmentMock = GetWebHostEnvironmentMock();
+        var authService = new AuthService(userManagerMock.Object, null!, tokenServiceMock.Object, httpContextAccessorMock.Object, webHostEnvironmentMock.Object);
         var loginDto = new LoginDto
         {
             Email = "test@example.com",
@@ -298,6 +322,6 @@ public class AuthServiceTests
         //create the assertion for token existence based on your implementation, for example:
         //result.Token.Should().NotBeNullOrEmpty();
         result.Token.Should().BeNullOrEmpty();
-        tokenServiceMock.Verify(ts => ts.GenerateToken(It.IsAny<User>()), Times.Never);
+        tokenServiceMock.Verify(ts => ts.GenerateToken(It.IsAny<User>(), It.IsAny<IEnumerable<string>>()), Times.Never);
     }
 }

@@ -37,7 +37,8 @@ var builder = WebApplication.CreateBuilder(args);
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // Adjust the origin as needed
+            policy
+                .WithOrigins("http://localhost:5173") // Adjust the origin as needed
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
@@ -85,13 +86,22 @@ var builder = WebApplication.CreateBuilder(args);
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
-                ValidAudience = builder.Configuration["JWT:Audience"],
-                ValidIssuer = builder.Configuration["JWT:Issuer"],
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["JWT:Issuer"],
+                ValidAudience = builder.Configuration["JWT:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(
                     System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]!)
                 ),
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    context.Token = context.Request.Cookies["token"];
+                    return Task.CompletedTask;
+                }
             };
         }
     );

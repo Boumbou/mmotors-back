@@ -6,6 +6,6 @@ namespace mmotors_back.Features.Accounts.Interfaces
 
     public interface ITokenService
     {
-        string GenerateToken(User user);
+        string GenerateToken(User user, IEnumerable<string> roles);
     }
 }
