@@ -27,16 +27,18 @@ namespace mmotors_back.Features.Accounts.Services;
 
 
         private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
         private readonly UserMapper _userMapper;
         private readonly ITokenService _tokenService;
+        private readonly IHttpContextAccessor _httpContext;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthService(UserManager<User> userManager, SignInManager<User> signInManager, UserMapper userMapper, ITokenService tokenService)
+        public AuthService(UserManager<User> userManager, UserMapper userMapper, ITokenService tokenService, IHttpContextAccessor httpContext, IWebHostEnvironment env   )
         {
             _userManager = userManager;
-            _signInManager = signInManager;
             _tokenService = tokenService;
             _userMapper = userMapper;
+            _httpContext = httpContext;
+            _env = env;
         }
 
         public async Task<RegisterResultDto> RegisterUserAsync(RegisterDto registerDto)
@@ -68,9 +70,10 @@ namespace mmotors_back.Features.Accounts.Services;
                 
                 await _userManager.AddToRoleAsync(user, "Customer");
                 
-                string token = _tokenService.GenerateToken(user);
+                List<string> roles = new List<string> { "Customer" };
+                string token = _tokenService.GenerateToken(user, roles);
                 
-                return new RegisterResultDto { Result = result, User = UserMapper.ToDTO(user), Token = token };
+                return new RegisterResultDto { Result = result, User = UserMapper.ToDTO(user), Roles = roles };
             }
             catch (Exception ex)
             {
@@ -87,21 +90,34 @@ namespace mmotors_back.Features.Accounts.Services;
                 return new LoginResultDto { Result = SignInResult.Failed  };
             }
 
-            SignInResult result = await _signInManager.PasswordSignInAsync(user, loginDto.Password, false, false);
-            
-            if (!result.Succeeded)
+            var isPasswordValid = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+
+            if (!isPasswordValid)
             {
-                return new LoginResultDto { Result = result };
+                return new LoginResultDto { Result = SignInResult.Failed };
             }
 
-            string userToken = _tokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            string userToken = _tokenService.GenerateToken(user, roles);
+
+            //send the token to the client in cookies
+
+            _httpContext?.HttpContext?.Response.Cookies.Append("token", userToken, 
+                new CookieOptions { 
+                    HttpOnly = true, 
+                    Secure = _env.IsProduction(), // Set to true in production
+                    SameSite = _env.IsProduction() ? SameSiteMode.None : SameSiteMode.Lax, // Adjust as needed
+                    Expires = DateTimeOffset.UtcNow.AddHours(1),
+                    Path = "/"         
+                }
+            );
 
             //return the result including signin result and token if successful
             return new LoginResultDto
             {
-                Result = result,
+                Result = SignInResult.Success,
                 User = UserMapper.ToDTO(user),
-                Token = userToken
+                Roles = roles
             };
 
         }
