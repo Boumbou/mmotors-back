@@ -530,3 +530,6 @@ wwwroot/*
 appsettings.json
 appsettings.*.json
 mmotors-back/appsettings.json
+*/coveragereport/*
+*/TestResults/*
+*.runsettings

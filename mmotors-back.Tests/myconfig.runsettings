@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+
+          <ExcludeByFile>
+            **/Program.cs,
+            **/Migrations/*.cs,
+            **/*.Designer.cs,
+            **/*.g.cs
+          </ExcludeByFile>
+
+          <Exclude>
+            [MyProject.Infrastructure]*
+            ,[MyProject]*.Generated.*
+          </Exclude>
+
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
