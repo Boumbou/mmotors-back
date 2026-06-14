@@ -2,9 +2,21 @@
 <RunSettings>
   <DataCollectionRunSettings>
     <DataCollectors>
-      <DataCollector friendlyName="XPlat Code Coverage">
+      <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
-          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+
+          <ExcludeByFile>
+            **/Program.cs,
+            **/Migrations/*.cs,
+            **/*.Designer.cs,
+            **/*.g.cs
+          </ExcludeByFile>
+
+          <Exclude>
+            [MyProject.Infrastructure]*
+            ,[MyProject]*.Generated.*
+          </Exclude>
+
         </Configuration>
       </DataCollector>
     </DataCollectors>
